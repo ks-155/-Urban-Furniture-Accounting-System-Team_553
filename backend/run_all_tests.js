@@ -1,6 +1,9 @@
 // Unified test runner for Urban Furniture Accounting System
 // Executes all 8 test suites sequentially and reports summary
 
+// Load backend/.env so spawned suites inherit DATABASE_URL/JWT_SECRET
+require('dotenv').config();
+
 const { spawn } = require('child_process');
 const path = require('path');
 
