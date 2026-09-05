@@ -173,8 +173,8 @@ export const SalesOrders = () => {
           {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button onClick={openNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            {so.status === 'DRAFT' && <button onClick={() => doConfirmSO(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
-            {so.status === 'CONFIRMED' && !inv && <button onClick={() => doCreateInvoice(so.id)} disabled={busy} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Creating…' : 'Create Invoice'}</button>}
+            {so.status === 'DRAFT' && <button onClick={() => doConfirmSO(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm Order</button>}
+            {so.status === 'CONFIRMED' && !inv && <button onClick={() => doCreateInvoice(so.id)} disabled={busy} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Creating...' : 'Generate Customer Invoice'}</button>}
             {inv && <Link to="/customer-invoices" className="px-6 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">Open Invoice {inv.invNumber}</Link>}
           </div>
         </div>

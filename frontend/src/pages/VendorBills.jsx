@@ -108,8 +108,8 @@ export const VendorBills = () => {
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
                 {bill.status === 'DRAFT' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting...' : 'Confirm (posts Dr Purchase / Cr Creditors)'}</button>}
-                {bill.status === 'SUBMITTED' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting...' : 'Approve & Post Bill (posts Dr Purchase / Cr Creditors)'}</button>}
-                {bill.status === 'CONFIRMED' && <button onClick={() => setPayOpen(true)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Pay</button>}
+                {bill.status === 'SUBMITTED' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting...' : 'Verify, Approve & Post Bill (posts Dr Purchase / Cr Creditors)'}</button>}
+                {bill.status === 'CONFIRMED' && <button onClick={() => setPayOpen(true)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Pay Vendor</button>}
                 {bill.status === 'PAID' && <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold">PAID in full</span>}
               </div>
               {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}

@@ -33,16 +33,16 @@ const LiveBadge = ({ live }) => (
   </span>
 );
 
-const FilterBar = ({ title, live, years, year, setYear }) => (
+const FilterBar = ({ title, live, years, year, setYear, yearOptions }) => (
   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
     <div>
       <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-      <div className="mt-1"><LiveBadge live={live} />{live && <span className="text-xs text-slate-400"> - all-time ledger (no date filter server-side)</span>}</div>
+      <div className="mt-1"><LiveBadge live={live} />{live && !yearOptions && <span className="text-xs text-slate-400"> - all-time ledger (no date filter server-side)</span>}</div>
     </div>
-    <div className="flex items-center gap-2">
-      {!live && (
+    <div className="flex items-center gap-2 no-print">
+      {(yearOptions || (!live && years)) && (
         <select value={year} onChange={(e) => setYear(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold">
-          {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          {(yearOptions || years.map((y) => ({ value: y, label: y }))).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       )}
       <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
@@ -50,26 +50,34 @@ const FilterBar = ({ title, live, years, year, setYear }) => (
   </div>
 );
 
+const LIVE_YEARS = [{ value: '', label: 'All time' }, { value: '2026', label: '2026' }, { value: '2025', label: '2025' }];
+
 // ---------- Balance Sheet (live-first) ----------
 export const BalanceSheet = () => {
   const { journalEntries } = useAccounting();
   const { years, year, setYear, filtered } = useYearFilter(journalEntries);
-  const [live, setLive] = useState(null);
+  const [live, setLive] = useState(undefined); // undefined = loading (no fallback flicker)
+  const [liveYear, setLiveYear] = useState('');
 
   useEffect(() => {
-    reportsAPI.balanceSheet()
+    setLive(undefined);
+    reportsAPI.balanceSheet(liveYear ? { year: liveYear } : {})
       .then((res) => setLive(res.data))
       .catch(() => setLive(null));
-  }, []);
+  }, [liveYear]);
 
   const row = (label, val) => (
     <div className="flex justify-between py-2 border-b border-slate-50 text-sm"><span className="text-slate-600">{label}</span><b>{inr(val)}</b></div>
   );
 
+  if (live === undefined) {
+    return <div className="max-w-5xl mx-auto px-4 py-16 text-center text-sm text-slate-500">Loading Balance Sheet...</div>;
+  }
+
   if (live) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FilterBar title="Balance Sheet" live />
+        <FilterBar title={`Balance Sheet${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <h2 className="font-bold text-slate-900 mb-2">Assets</h2>
@@ -128,12 +136,14 @@ export const ProfitLoss = () => {
   const { journalEntries } = useAccounting();
   const { years, year, setYear, filtered } = useYearFilter(journalEntries);
   const [live, setLive] = useState(undefined); // undefined = loading
+  const [liveYear, setLiveYear] = useState('');
 
   useEffect(() => {
-    reportsAPI.profitLoss()
+    setLive(undefined);
+    reportsAPI.profitLoss(liveYear ? { year: liveYear } : {})
       .then((res) => setLive(res.data))
       .catch(() => setLive(null));
-  }, []);
+  }, [liveYear]);
 
   const row = (label, val, bold) => (
     <div className="flex justify-between py-2 border-b border-slate-50 text-sm"><span className={bold ? 'font-bold' : 'text-slate-600'}>{label}</span><b>{inr(val)}</b></div>
@@ -142,7 +152,7 @@ export const ProfitLoss = () => {
   if (live) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FilterBar title="Profit and Loss Report" live />
+        <FilterBar title={`Profit and Loss Report${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} />
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 className="font-bold text-slate-900 mb-2">Income</h2>
           {(live.income || []).map((a) => row(a.account || a.name, a.amount, false))}
