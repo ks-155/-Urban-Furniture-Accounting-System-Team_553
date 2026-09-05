@@ -79,3 +79,32 @@ export const analyticsAPI = {
   list: () => api.get('/analytic-accounts'),
   create: (payload) => api.post('/analytic-accounts', payload),
 };
+
+// Admin user management (Excalidraw Create User; ADMIN-only, never changes session)
+export const usersAPI = {
+  list: () => api.get('/users'),
+  create: (payload) => api.post('/users', payload),
+};
+
+// Phase 3 Purchase Flow (live backend). All routes require ADMIN/ACCOUNTANT JWT.
+export const purchasesAPI = {
+  list: (params) => api.get('/purchases', { params }),
+  get: (id) => api.get(`/purchases/${id}`),
+  create: (payload) => api.post('/purchases', payload),
+  confirm: (id) => api.post(`/purchases/${id}/confirm`),
+  createBill: (id) => api.post(`/purchases/${id}/create-bill`),
+};
+
+export const billsAPI = {
+  list: (params) => api.get('/bills', { params }),
+  get: (id) => api.get(`/bills/${id}`),
+  create: (payload) => api.post('/bills', payload),
+  confirm: (id) => api.post(`/bills/${id}/confirm`),
+  pay: (id, payload) => api.post(`/bills/${id}/pay`, payload),
+};
+
+// Phase 3 Accounting Engine — strict balanced_entries enforced server-side
+export const journalEntriesAPI = {
+  list: (params) => api.get('/journal-entries', { params }),
+  create: (payload) => api.post('/journal-entries', payload),
+};

@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { usersAPI, getApiError, USE_MOCK_FALLBACK } from '../services/api';
 import { useAccounting } from '../context/AccountingContext';
 import { X, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export const CreateUserModal = ({ isOpen, onClose }) => {
-  const { signup, authLoading } = useAccounting();
+  // NOTE: uses POST /api/users (ADMIN-only, role-aware) — never /auth/signup,
+  // so the admin's own session is never replaced by the created user.
+  const { users, addMockUser } = useAccounting();
+  const [busy, setBusy] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -24,28 +28,40 @@ export const CreateUserModal = ({ isOpen, onClose }) => {
     setError('');
   };
 
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
+  const resetForm = () => setFormData({ name: '', loginId: '', email: '', role: 'ACCOUNTANT', password: '', confirmPassword: '' });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
 
-    const res = await signup(formData);
-    if (!res.success) {
-      setError(res.error);
-    } else {
-      setSuccessMsg(`User "${formData.name}" created successfully as ${formData.role}!`);
-      setTimeout(() => {
-        onClose();
-        setSuccessMsg('');
-        setFormData({
-          name: '',
-          loginId: '',
-          email: '',
-          role: 'ACCOUNTANT',
-          password: '',
-          confirmPassword: ''
-        });
-      }, 1200);
+    // Client pre-validation mirrors backend (CONTRACT 1.2 + Create User screen rules)
+    if (!formData.name.trim()) { setError('Name is required.'); return; }
+    if (!formData.loginId || formData.loginId.length < 6 || formData.loginId.length > 12) { setError('Login ID must be between 6 and 12 characters.'); return; }
+    if (users.some((u) => u.loginId.toLowerCase() === formData.loginId.toLowerCase())) { setError('Login ID is already taken.'); return; }
+    if (users.some((u) => u.email.toLowerCase() === formData.email.toLowerCase())) { setError('Email is already registered.'); return; }
+    if (!passwordRegex.test(formData.password)) { setError('Password must be 8+ characters with lowercase, uppercase, and special character.'); return; }
+    if (formData.password !== formData.confirmPassword) { setError('Passwords do not match.'); return; }
+
+    setBusy(true);
+    try {
+      const res = await usersAPI.create(formData);
+      setSuccessMsg(`User "${res.data?.user?.loginId || formData.loginId}" created successfully as ${formData.role}!`);
+      setTimeout(() => { onClose(); setSuccessMsg(''); resetForm(); }, 1200);
+    } catch (err) {
+      if (err?.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (USE_MOCK_FALLBACK) {
+        // Offline demo: local mock store only, admin session untouched
+        addMockUser(formData);
+        setSuccessMsg(`User "${formData.name}" created successfully as ${formData.role}! (offline demo)`);
+        setTimeout(() => { onClose(); setSuccessMsg(''); resetForm(); }, 1200);
+      } else {
+        setError(getApiError(err));
+      }
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -252,10 +268,10 @@ export const CreateUserModal = ({ isOpen, onClose }) => {
             </button>
             <button
               type="submit"
-              disabled={authLoading}
+              disabled={busy}
               className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all"
             >
-              {authLoading ? 'Creating…' : 'Create'}
+              {busy ? 'Creating...' : 'Create'}
             </button>
           </div>
 

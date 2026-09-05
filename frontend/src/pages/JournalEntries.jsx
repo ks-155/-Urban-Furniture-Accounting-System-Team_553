@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
+import { accountsAPI, journalsAPI } from '../services/api';
+import { useLiveList } from '../hooks/useLiveList';
 import { ArrowLeft, Plus } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const entryTotal = (e) => e.items.reduce((s, i) => s + Number(i.debit || 0), 0);
 
 export const JournalEntries = () => {
-  const { journalEntries, accounts, contacts, journals, createJournalEntry } = useAccounting();
+  const { journalEntries, accounts: mockAccounts, journals: mockJournals, createJournalEntry } = useAccounting();
+  const accountsFetcher = useCallback(() => accountsAPI.list(), []);
+  const { data: liveAccounts } = useLiveList(accountsFetcher, 'accounts', mockAccounts);
+  const journalsFetcher = useCallback(() => journalsAPI.list(), []);
+  const { data: liveJournals } = useLiveList(journalsFetcher, 'journals', mockJournals);
+  const accounts = liveAccounts.length ? liveAccounts : mockAccounts;
+  const journals = liveJournals.length ? liveJournals : mockJournals;
   const [selectedId, setSelectedId] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [jName, setJName] = useState(journals[0]?.name || 'Purchase Journal');
@@ -14,6 +22,7 @@ export const JournalEntries = () => {
   const [jRef, setJRef] = useState('');
   const [rows, setRows] = useState([{ accountId: '', debit: '', credit: '' }, { accountId: '', debit: '', credit: '' }]);
   const [formError, setFormError] = useState('');
+  const [posting, setPosting] = useState(false);
 
   const selected = journalEntries.find((e) => e.id === selectedId) || null;
   const accName = (id) => { const a = accounts.find((x) => String(x.id) === String(id)); return a ? `${a.code} — ${a.name}` : ''; };
@@ -21,19 +30,25 @@ export const JournalEntries = () => {
   const totC = rows.reduce((s, r) => s + Number(r.credit || 0), 0);
   const balanced = Math.abs(totD - totC) < 0.005 && totD > 0;
 
-  const handlePost = () => {
+  const handlePost = async () => {
     setFormError('');
+    const jMatch = journals.find((j) => j.name === jName);
     const lines = rows.filter((r) => r.accountId).map((r) => {
       const a = accounts.find((x) => String(x.id) === String(r.accountId));
-      return { accountCode: a?.code || '', accountName: a?.name || '', debit: Number(r.debit || 0), credit: Number(r.credit || 0) };
+      return { accountId: r.accountId, accountCode: a?.code || '', accountName: a?.name || '', debit: Number(r.debit || 0), credit: Number(r.credit || 0) };
     });
     if (lines.length < 2) { setFormError('Add at least two lines with accounts.'); return; }
-    const res = createJournalEntry({ journalName: jName, date: jDate, reference: jRef, lines });
-    if (!res.success) { setFormError(res.error); return; } // blocking warning when unbalanced
-    setShowNew(false);
-    setRows([{ accountId: '', debit: '', credit: '' }, { accountId: '', debit: '', credit: '' }]);
-    setJRef('');
-    setSelectedId(res.entry.id);
+    setPosting(true);
+    try {
+      const res = await createJournalEntry({ journalName: jName, journalId: jMatch?.id, date: jDate, reference: jRef, lines });
+      if (!res.success) { setFormError(res.error); return; } // blocking warning when unbalanced
+      setShowNew(false);
+      setRows([{ accountId: '', debit: '', credit: '' }, { accountId: '', debit: '', credit: '' }]);
+      setJRef('');
+      if (res.entry) setSelectedId(res.entry.id);
+    } finally {
+      setPosting(false);
+    }
   };
 
   const input = 'w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600';
@@ -76,7 +91,7 @@ export const JournalEntries = () => {
           {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{formError}</div>}
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowNew(false)} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold">Cancel</button>
-            <button onClick={handlePost} className="px-6 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">Post</button>
+            <button onClick={handlePost} disabled={posting} className="px-6 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60">{posting ? 'Posting…' : 'Post'}</button>
           </div>
         </div>
       )}
@@ -115,7 +130,7 @@ export const JournalEntries = () => {
                   {selected.items.map((it, i) => (
                     <tr key={i} className="border-b border-slate-50 last:border-0">
                       <td className="py-2 font-semibold">{it.accountName}</td>
-                      <td className="py-2 text-slate-600 text-xs">{it.accountName?.includes('(') ? it.accountName : '—'}</td>
+                      <td className="py-2 text-slate-600 text-xs">{it.partnerName || (it.accountName?.includes('(') ? it.accountName : '—')}</td>
                       <td className="py-2 text-right">{it.debit ? inr(it.debit) : ''}</td>
                       <td className="py-2 text-right">{it.credit ? inr(it.credit) : ''}</td>
                     </tr>

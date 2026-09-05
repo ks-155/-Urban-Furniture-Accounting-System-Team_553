@@ -183,6 +183,14 @@ async function createBillFromPO(req, res) {
       return res.status(404).json({ error: 'Purchase order not found.' });
     }
 
+    if (po.status === 'BILLED') {
+      return res.status(400).json({ error: 'This Purchase Order has already been billed.' });
+    }
+
+    if (po.status === 'DRAFT') {
+      return res.status(400).json({ error: 'Cannot create a bill from a Draft PO. Please confirm the PO first.' });
+    }
+
     // Sequence for Bill: BILL0001, BILL0002
     const lastBill = await prisma.vendorBill.findFirst({
       orderBy: { id: 'desc' },
