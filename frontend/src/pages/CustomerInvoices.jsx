@@ -9,6 +9,24 @@ export const CustomerInvoices = () => {
   const { customerInvoices, salesOrders, payments, confirmCustomerInvoice, registerInvoicePayment } = useAccounting();
   const [selectedId, setSelectedId] = useState(customerInvoices[0]?.id || null);
   const [payOpen, setPayOpen] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const doConfirm = async () => {
+    setActionError('');
+    setBusy(true);
+    try {
+      const res = await confirmCustomerInvoice(inv.id);
+      if (res && res.success === false) setActionError(res.error || 'Confirm failed.');
+    } catch (err) { setActionError(err?.message || 'Confirm failed.'); } finally { setBusy(false); }
+  };
+  const doPay = async (method) => {
+    setActionError('');
+    try {
+      const res = await registerInvoicePayment(inv.id, method);
+      if (res && res.success === false) setActionError(res.error || 'Payment failed.');
+    } catch (err) { setActionError(err?.message || 'Payment failed.'); } finally { setPayOpen(false); }
+  };
 
   const inv = customerInvoices.find((i) => i.id === selectedId) || null;
   const so = inv?.salesOrderId ? salesOrders.find((s) => s.id === inv.salesOrderId) : null;
@@ -72,16 +90,17 @@ export const CustomerInvoices = () => {
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Amount Due</p><p className="font-bold text-red-600">{inr(due)}</p></div>
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
-                {inv.status === 'DRAFT' && <button onClick={() => confirmCustomerInvoice(inv.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm (posts Dr Debtors / Cr Sales)</button>}
+                {inv.status === 'DRAFT' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting…' : 'Confirm (posts Dr Debtors / Cr Sales)'}</button>}
                 {inv.status === 'CONFIRMED' && <button onClick={() => setPayOpen(true)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Receive Payment</button>}
                 {inv.status === 'PAID' && <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold">PAID in full</span>}
               </div>
+              {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
             </div>
           )}
         </div>
       </div>
       <PaymentModal open={payOpen} title={`Invoice Receipt — ${inv?.invNumber}`} dueAmount={due} onClose={() => setPayOpen(false)}
-        onConfirm={(method) => { registerInvoicePayment(inv.id, method); setPayOpen(false); }} />
+        onConfirm={doPay} />
     </div>
   );
 };

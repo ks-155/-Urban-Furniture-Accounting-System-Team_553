@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
+import { contactsAPI, productsAPI } from '../services/api';
+import { useLiveList, phoneOf } from '../hooks/useLiveList';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { phoneOf } from '../hooks/useLiveList';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const SalesOrders = () => {
-  const { salesOrders, contacts, products, createSalesOrder, confirmSalesOrder, createInvoiceFromSO, customerInvoices } = useAccounting();
+  const { salesOrders, contacts: mockContacts, products: mockProducts, createSalesOrder, confirmSalesOrder, createInvoiceFromSO, customerInvoices } = useAccounting();
+  const contactsFetcher = useCallback(() => contactsAPI.list(), []);
+  const { data: liveContacts } = useLiveList(contactsFetcher, 'contacts', mockContacts);
+  const productsFetcher = useCallback(() => productsAPI.list(), []);
+  const { data: liveProducts } = useLiveList(productsFetcher, 'products', mockProducts);
+  const contacts = liveContacts.length ? liveContacts : mockContacts;
+  const products = liveProducts.length ? liveProducts : mockProducts;
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
   const [customerId, setCustomerId] = useState('');
   const [soDate, setSoDate] = useState(new Date().toISOString().split('T')[0]);
   const [lines, setLines] = useState([{ productId: '', analytic: '', quantity: 1, unitPrice: '' }]);
   const [formError, setFormError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const customers = contacts.filter((c) => c.type === 'CUSTOMER' || c.type === 'BOTH');
   const invForSO = (soId) => customerInvoices.find((i) => i.salesOrderId === soId);
@@ -37,14 +46,31 @@ export const SalesOrders = () => {
   const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
   const tax = Math.round((subtotal * 18) / 100);
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setFormError('');
     if (!customerId) { setFormError('Select a customer from Contact Master.'); return; }
     if (lines.some((l) => !l.productId || Number(l.quantity) <= 0)) { setFormError('Each row needs a product and quantity > 0.'); return; }
-    const so = createSalesOrder(customerId, lines, { date: soDate });
-    setSelected(so);
-    setView('detail');
+    setBusy(true);
+    try {
+      const so = await createSalesOrder(customerId, lines, { date: soDate });
+      setSelected(so);
+      setView('detail');
+    } catch (err) {
+      setFormError(err?.message || 'Failed to create sales order.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doConfirmSO = async (id) => {
+    setActionError('');
+    try { await confirmSalesOrder(id); } catch (err) { setActionError(err?.message || 'Confirm failed.'); }
+  };
+  const doCreateInvoice = async (id) => {
+    setActionError('');
+    setBusy(true);
+    try { await createInvoiceFromSO(id); } catch (err) { setActionError(err?.message || 'Create Invoice failed.'); } finally { setBusy(false); }
   };
 
   const input = 'w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm';
@@ -99,7 +125,7 @@ export const SalesOrders = () => {
           <div className="flex justify-end gap-4 text-sm"><span className="text-slate-500">Subtotal {inr(subtotal)}</span><span className="text-slate-500">Tax 18% {inr(tax)}</span><b>Total {inr(subtotal + tax)}</b></div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            <button type="submit" className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>
+            <button type="submit" disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -137,10 +163,11 @@ export const SalesOrders = () => {
             </tbody>
           </table>
           <div className="flex justify-end text-sm"><span className="text-slate-500 mr-2">Total (incl. tax)</span><b>{inr(so.totalAmount)}</b></div>
+          {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button onClick={openNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            {so.status === 'DRAFT' && <button onClick={() => confirmSalesOrder(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
-            {so.status === 'CONFIRMED' && !inv && <button onClick={() => createInvoiceFromSO(so.id)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Create Invoice</button>}
+            {so.status === 'DRAFT' && <button onClick={() => doConfirmSO(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
+            {so.status === 'CONFIRMED' && !inv && <button onClick={() => doCreateInvoice(so.id)} disabled={busy} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Creating…' : 'Create Invoice'}</button>}
             {inv && <Link to="/customer-invoices" className="px-6 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">Open Invoice {inv.invNumber}</Link>}
           </div>
         </div>

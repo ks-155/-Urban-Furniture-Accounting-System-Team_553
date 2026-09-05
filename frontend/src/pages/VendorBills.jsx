@@ -35,6 +35,8 @@ export const VendorBills = () => {
   const paidBank = billPayments.filter((p) => p.paymentMethod === 'BANK').reduce((s, p) => s + Number(p.amount || 0), 0);
   const due = bill ? Number(bill.totalAmount || 0) - Number(bill.paidAmount || 0) : 0;
 
+  const badge = (s) => (s === 'PAID' ? 'bg-emerald-100 text-emerald-700' : s === 'SUBMITTED' ? 'bg-amber-100 text-amber-800' : s === 'CONFIRMED' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600');
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -42,11 +44,11 @@ export const VendorBills = () => {
           <div className="px-4 py-3 border-b border-slate-100 font-bold text-slate-900">Vendor Bills (List)</div>
           {vendorBills.map((b) => (
             <button key={b.id} onClick={() => setSelectedId(b.id)} className={`w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50/40 ${b.id === selectedId ? 'bg-blue-50/60' : ''}`}>
-              <p className="font-bold text-sm text-slate-900">{b.billNumber} <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{b.status}</span></p>
-              <p className="text-xs text-slate-500">{b.vendorName} • {inr(b.totalAmount)}</p>
+              <p className="font-bold text-sm text-slate-900">{b.billNumber} <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${badge(b.status)}`}>{b.status}</span></p>
+              <p className="text-xs text-slate-500">{b.vendorName} - {inr(b.totalAmount)}{b.reference ? ` - Ref ${b.reference}` : ''}</p>
             </button>
           ))}
-          {vendorBills.length === 0 && <p className="px-4 py-8 text-sm text-slate-500 text-center">No bills yet — create one from a Purchase Order.</p>}
+          {vendorBills.length === 0 && <p className="px-4 py-8 text-sm text-slate-500 text-center">No bills yet - create one from a Purchase Order.</p>}
         </div>
 
         <div className="lg:col-span-2">
@@ -63,6 +65,11 @@ export const VendorBills = () => {
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Due Date</p><p>{bill.dueDate}</p></div>
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Status</p><p className="font-bold">{bill.status}</p></div>
               </div>
+              {bill.reference && (
+                <div className="text-sm"><span className="text-slate-500 mr-2">Vendor Invoice Ref:</span><b>{bill.reference}</b>
+                  {bill.status === 'SUBMITTED' && <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">SUBMITTED - awaiting approval (no JE yet)</span>}
+                </div>
+              )}
               {po && (
                 <div className="text-sm">
                   <span className="text-slate-500 mr-2">Created from {po.poNumber}.</span>
@@ -90,7 +97,8 @@ export const VendorBills = () => {
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Amount Due</p><p className="font-bold text-red-600">{inr(due)}</p></div>
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
-                {bill.status === 'DRAFT' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting…' : 'Confirm (posts Dr Purchase / Cr Creditors)'}</button>}
+                {bill.status === 'DRAFT' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting...' : 'Confirm (posts Dr Purchase / Cr Creditors)'}</button>}
+                {bill.status === 'SUBMITTED' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting...' : 'Approve & Post Bill (posts Dr Purchase / Cr Creditors)'}</button>}
                 {bill.status === 'CONFIRMED' && <button onClick={() => setPayOpen(true)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Pay</button>}
                 {bill.status === 'PAID' && <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold">PAID in full</span>}
               </div>
