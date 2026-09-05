@@ -64,11 +64,8 @@ export const Payments = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {tab === 'INBOUND' ? 'Customer Receipts (Sales)' : tab === 'OUTBOUND' ? 'Vendor Payments (Purchase)' : 'Payments & Receipts Ledger'}
+            {tab === 'INBOUND' ? 'Customer Receipts' : tab === 'OUTBOUND' ? 'Vendor Payments' : 'Payments & Receipts Ledger'}
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Double-entry balanced via Bank & Cash Journals
-          </p>
         </div>
 
         {/* Tab Buttons */}
