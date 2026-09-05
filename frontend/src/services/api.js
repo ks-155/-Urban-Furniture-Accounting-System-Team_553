@@ -133,3 +133,22 @@ export const paymentsAPI = {
   list: (params) => api.get('/payments', { params }),
   get: (id) => api.get(`/payments/${id}`),
 };
+
+// Phase 5 Financial Reports, Budgets & Dashboard
+export const reportsAPI = {
+  balanceSheet: (params) => api.get('/reports/balance-sheet', { params }),
+  profitLoss: (params) => api.get('/reports/profit-loss', { params }),
+  budget: (params) => api.get('/reports/budget', { params }),
+};
+
+export const budgetsAPI = {
+  list: (params) => api.get('/budgets', { params }),
+  get: (id) => api.get(`/budgets/${id}`),
+  create: (payload) => api.post('/budgets', payload),
+  confirm: (id) => api.post(`/budgets/${id}/confirm`),
+  revise: (id) => api.post(`/budgets/${id}/revise`),
+};
+
+export const dashboardAPI = {
+  stats: () => api.get('/dashboard'),
+};
