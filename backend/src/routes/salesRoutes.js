@@ -9,8 +9,8 @@ router.use(authenticateToken);
 router.get('/', salesController.getSalesOrders);
 router.get('/:id', salesController.getSalesOrderById);
 
-// Staff only operations
-router.post('/', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.createSalesOrder);
+// Staff or Customer order creation
+router.post('/', salesController.createSalesOrder);
 router.post('/:id/confirm', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.confirmSalesOrder);
 router.post('/:id/create-invoice', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.createInvoiceFromSO);
 

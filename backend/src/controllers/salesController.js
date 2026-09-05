@@ -107,7 +107,12 @@ async function createSalesOrder(req, res) {
   try {
     const { customerId, date, taxRate = 18, lines } = req.body;
 
-    if (!customerId) {
+    let targetCustomerId = customerId ? parseInt(customerId, 10) : null;
+    if (req.user && req.user.role === 'USER') {
+      targetCustomerId = req.user.contactId || targetCustomerId;
+    }
+
+    if (!targetCustomerId) {
       return res.status(400).json({ error: 'Customer is required.' });
     }
 
@@ -116,7 +121,7 @@ async function createSalesOrder(req, res) {
     }
 
     const customer = await prisma.contact.findUnique({
-      where: { id: parseInt(customerId, 10) },
+      where: { id: targetCustomerId },
     });
 
     if (!customer) {
