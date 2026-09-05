@@ -18,6 +18,7 @@ import { SalesOrders } from './pages/SalesOrders';
 import { CustomerInvoices } from './pages/CustomerInvoices';
 import { JournalEntries } from './pages/JournalEntries';
 import { Budgets } from './pages/Budgets';
+import { Payments } from './pages/Payments';
 import { BalanceSheet, ProfitLoss, BudgetReport } from './pages/Reports';
 
 const ComingSoon = ({ title }) => (
@@ -41,7 +42,7 @@ function Shell() {
         <Route path="/customer-invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
         <Route path="/purchase-orders" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
         <Route path="/vendor-bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
-        <Route path="/payments" element={<StaffRoute><ComingSoon title="Payments ledger (Phase 3/4 — pay from Bill/Invoice)" /></StaffRoute>} />
+        <Route path="/payments" element={<StaffRoute><Payments /></StaffRoute>} />
         <Route path="/contacts" element={<StaffRoute><Contacts /></StaffRoute>} />
         <Route path="/products" element={<StaffRoute><Products /></StaffRoute>} />
         <Route path="/chart-of-accounts" element={<StaffRoute><ChartOfAccounts /></StaffRoute>} />

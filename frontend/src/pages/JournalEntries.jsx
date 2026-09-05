@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { accountsAPI, journalsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const entryTotal = (e) => e.items.reduce((s, i) => s + Number(i.debit || 0), 0);
@@ -23,6 +23,13 @@ export const JournalEntries = () => {
   const [rows, setRows] = useState([{ accountId: '', debit: '', credit: '' }, { accountId: '', debit: '', credit: '' }]);
   const [formError, setFormError] = useState('');
   const [posting, setPosting] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const visibleEntries = journalEntries.filter((e) => {
+    if (!search.trim()) return true;
+    const t = search.trim().toLowerCase();
+    return e.entryNumber?.toLowerCase().includes(t) || e.reference?.toLowerCase().includes(t) || e.journalName?.toLowerCase().includes(t);
+  });
 
   const selected = journalEntries.find((e) => e.id === selectedId) || null;
   const accName = (id) => { const a = accounts.find((x) => String(x.id) === String(id)); return a ? `${a.code} — ${a.name}` : ''; };
@@ -58,6 +65,10 @@ export const JournalEntries = () => {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-bold text-slate-900">Journal Entries (List View)</h1>
         <button onClick={() => { setShowNew(!showNew); setFormError(''); }} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
+      </div>
+      <div className="relative mb-4">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search entry number, reference, journal..." className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
       </div>
 
       {showNew && (
@@ -103,7 +114,7 @@ export const JournalEntries = () => {
               <th className="px-4 py-3">Date</th><th className="px-4 py-3">Number</th><th className="px-4 py-3">Journal</th><th className="px-4 py-3 text-right">Total</th><th className="px-4 py-3">Status</th>
             </tr></thead>
             <tbody>
-              {journalEntries.map((e) => (
+              {visibleEntries.map((e) => (
                 <tr key={e.id} onClick={() => setSelectedId(e.id)} className={`border-b border-slate-50 last:border-0 hover:bg-blue-50/40 cursor-pointer ${e.id === selectedId ? 'bg-blue-50/60' : ''}`}>
                   <td className="px-4 py-3 text-slate-600">{e.date}</td>
                   <td className="px-4 py-3 font-bold">{e.entryNumber}</td>

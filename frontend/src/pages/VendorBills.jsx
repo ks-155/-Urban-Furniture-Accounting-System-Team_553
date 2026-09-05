@@ -11,6 +11,13 @@ export const VendorBills = () => {
   const [payOpen, setPayOpen] = useState(false);
   const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const visibleBills = vendorBills.filter((b) => {
+    if (!search.trim()) return true;
+    const t = search.trim().toLowerCase();
+    return b.billNumber?.toLowerCase().includes(t) || b.vendorName?.toLowerCase().includes(t) || b.reference?.toLowerCase().includes(t) || b.status?.toLowerCase().includes(t);
+  });
 
   const doConfirm = async () => {
     setActionError('');
@@ -42,13 +49,16 @@ export const VendorBills = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-fit">
           <div className="px-4 py-3 border-b border-slate-100 font-bold text-slate-900">Vendor Bills (List)</div>
-          {vendorBills.map((b) => (
+          <div className="p-2 border-b border-slate-100">
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search bills..." className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
+          </div>
+          {visibleBills.map((b) => (
             <button key={b.id} onClick={() => setSelectedId(b.id)} className={`w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50/40 ${b.id === selectedId ? 'bg-blue-50/60' : ''}`}>
               <p className="font-bold text-sm text-slate-900">{b.billNumber} <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${badge(b.status)}`}>{b.status}</span></p>
               <p className="text-xs text-slate-500">{b.vendorName} - {inr(b.totalAmount)}{b.reference ? ` - Ref ${b.reference}` : ''}</p>
             </button>
           ))}
-          {vendorBills.length === 0 && <p className="px-4 py-8 text-sm text-slate-500 text-center">No bills yet - create one from a Purchase Order.</p>}
+          {visibleBills.length === 0 && <p className="px-4 py-8 text-sm text-slate-500 text-center">No bills yet - create one from a Purchase Order.</p>}
         </div>
 
         <div className="lg:col-span-2">
