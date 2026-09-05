@@ -150,7 +150,7 @@ export const Login = () => {
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2.5">
               ⚡ 1-Click Demo Logins
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('admin', 'Admin@123')}
@@ -175,7 +175,16 @@ export const Login = () => {
                 className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-center transition-all"
               >
                 <span className="block text-[11px] font-bold">Customer</span>
-                <span className="text-[9px] opacity-75">Invoices & Pay</span>
+                <span className="text-[9px] opacity-75">Nimesh Pathak</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('azure01', 'Password@123')}
+                className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-center transition-all"
+              >
+                <span className="block text-[11px] font-bold">Vendor</span>
+                <span className="text-[9px] opacity-75">Azure Furniture</span>
               </button>
             </div>
           </div>
