@@ -7,6 +7,11 @@ import { CreateUserModal } from './components/CreateUserModal';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
+import { Contacts } from './pages/Contacts';
+import { Products } from './pages/Products';
+import { ChartOfAccounts } from './pages/ChartOfAccounts';
+import { Journals } from './pages/Journals';
+import { Analytics } from './pages/Analytics';
 
 const ComingSoon = ({ title }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
@@ -30,10 +35,11 @@ function Shell() {
         <Route path="/purchase-orders" element={<ProtectedRoute><ComingSoon title="Purchase Orders (Phase 4)" /></ProtectedRoute>} />
         <Route path="/vendor-bills" element={<ProtectedRoute><ComingSoon title="Vendor Bills (Phase 4)" /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><ComingSoon title="Payments (Phase 3/4)" /></ProtectedRoute>} />
-        <Route path="/contacts" element={<ProtectedRoute><ComingSoon title="Contacts (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/products" element={<ProtectedRoute><ComingSoon title="Products (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/chart-of-accounts" element={<ProtectedRoute><ComingSoon title="Chart of Accounts (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/budgets" element={<ProtectedRoute><ComingSoon title="Budgets (Phase 5)" /></ProtectedRoute>} />
+        <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+        <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+        <Route path="/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
+        <Route path="/journals" element={<ProtectedRoute><Journals /></ProtectedRoute>} />
+        <Route path="/budgets" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
         <Route path="/journal-entries" element={<ProtectedRoute><ComingSoon title="Journal Entries (Phase 6)" /></ProtectedRoute>} />
         <Route path="/reports/balance-sheet" element={<ProtectedRoute><ComingSoon title="Balance Sheet (Phase 7)" /></ProtectedRoute>} />
         <Route path="/reports/profit-loss" element={<ProtectedRoute><ComingSoon title="Profit & Loss (Phase 7)" /></ProtectedRoute>} />

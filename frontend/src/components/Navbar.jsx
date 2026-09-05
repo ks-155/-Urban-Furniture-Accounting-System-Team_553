@@ -215,6 +215,13 @@ export const Navbar = ({ onOpenCreateUser }) => {
                         Ledgers & Entries
                       </div>
                       <Link
+                        to="/journals"
+                        onClick={() => setActiveDropdown(null)}
+                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                      >
+                        Journals (Sales/Purchase/Bank/Cash)
+                      </Link>
+                      <Link
                         to="/journal-entries"
                         onClick={() => setActiveDropdown(null)}
                         className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 font-medium text-indigo-600"
