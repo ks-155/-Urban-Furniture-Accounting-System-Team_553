@@ -17,6 +17,7 @@ Balance Sheet + P&L + Budget Report
 ## Documentation
 - [Architecture & Design (`docs/ARCHITECTURE.md`)](docs/ARCHITECTURE.md)
 - [Team Contract (`docs/CONTRACT.md`)](docs/CONTRACT.md)
+- [Tech Stack & Judge Q&A (`docs/TECH_STACK_AND_PITCH.md`)](docs/TECH_STACK_AND_PITCH.md)
 - [Implementation Plan (`docs/implementation_plan.md`)](docs/implementation_plan.md)
 - [Task Checklist (`docs/task.md`)](docs/task.md)
 
