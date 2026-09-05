@@ -3,6 +3,11 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const productRoutes = require('./routes/productRoutes');
+const accountRoutes = require('./routes/accountRoutes');
+const journalRoutes = require('./routes/journalRoutes');
+const analyticRoutes = require('./routes/analyticRoutes');
 
 const app = express();
 
@@ -13,6 +18,11 @@ app.use(express.json());
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/journals', journalRoutes);
+app.use('/api/analytic-accounts', analyticRoutes);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
