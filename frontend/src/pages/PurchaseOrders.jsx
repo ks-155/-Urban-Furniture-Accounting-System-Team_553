@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
 import { contactsAPI, productsAPI } from '../services/api';
 import { useLiveList, phoneOf } from '../hooks/useLiveList';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -23,6 +23,13 @@ export const PurchaseOrders = () => {
   const [formError, setFormError] = useState('');
   const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const visiblePOs = purchaseOrders.filter((po) => {
+    if (!search.trim()) return true;
+    const t = search.trim().toLowerCase();
+    return po.poNumber?.toLowerCase().includes(t) || po.vendorName?.toLowerCase().includes(t) || po.status?.toLowerCase().includes(t);
+  });
 
   const vendors = contacts.filter((c) => c.type === 'VENDOR' || c.type === 'BOTH');
   const billForPO = (poId) => vendorBills.find((b) => b.purchaseOrderId === poId);
@@ -183,13 +190,17 @@ export const PurchaseOrders = () => {
         <h1 className="text-xl font-bold text-slate-900">Purchase Orders (List View)</h1>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
+      <div className="relative mb-4">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search PO number, vendor, status..." className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
+      </div>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead><tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
             <th className="px-4 py-3">PO No.</th><th className="px-4 py-3">Vendor</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Total</th>
           </tr></thead>
           <tbody>
-            {purchaseOrders.map((po) => (
+            {visiblePOs.map((po) => (
               <tr key={po.id} onClick={() => openDetail(po)} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40 cursor-pointer">
                 <td className="px-4 py-3 font-bold text-slate-900">{po.poNumber}</td>
                 <td className="px-4 py-3">{po.vendorName}</td>
@@ -198,7 +209,7 @@ export const PurchaseOrders = () => {
                 <td className="px-4 py-3 text-right font-semibold">{inr(po.totalAmount)}</td>
               </tr>
             ))}
-            {purchaseOrders.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No purchase orders.</td></tr>}
+            {visiblePOs.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No purchase orders.</td></tr>}
           </tbody>
         </table>
       </div>

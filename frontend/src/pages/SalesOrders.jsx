@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
-import { ArrowLeft, Plus } from 'lucide-react';
-import { phoneOf } from '../hooks/useLiveList';
+import { contactsAPI, productsAPI } from '../services/api';
+import { useLiveList, phoneOf } from '../hooks/useLiveList';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const SalesOrders = () => {
-  const { salesOrders, contacts, products, createSalesOrder, confirmSalesOrder, createInvoiceFromSO, customerInvoices } = useAccounting();
+  const { salesOrders, contacts: mockContacts, products: mockProducts, createSalesOrder, confirmSalesOrder, createInvoiceFromSO, customerInvoices } = useAccounting();
+  const contactsFetcher = useCallback(() => contactsAPI.list(), []);
+  const { data: liveContacts } = useLiveList(contactsFetcher, 'contacts', mockContacts);
+  const productsFetcher = useCallback(() => productsAPI.list(), []);
+  const { data: liveProducts } = useLiveList(productsFetcher, 'products', mockProducts);
+  const contacts = liveContacts.length ? liveContacts : mockContacts;
+  const products = liveProducts.length ? liveProducts : mockProducts;
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
   const [customerId, setCustomerId] = useState('');
   const [soDate, setSoDate] = useState(new Date().toISOString().split('T')[0]);
   const [lines, setLines] = useState([{ productId: '', analytic: '', quantity: 1, unitPrice: '' }]);
   const [formError, setFormError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const visibleSOs = salesOrders.filter((so) => {
+    if (!search.trim()) return true;
+    const t = search.trim().toLowerCase();
+    return so.soNumber?.toLowerCase().includes(t) || so.customerName?.toLowerCase().includes(t) || so.status?.toLowerCase().includes(t);
+  });
 
   const customers = contacts.filter((c) => c.type === 'CUSTOMER' || c.type === 'BOTH');
   const invForSO = (soId) => customerInvoices.find((i) => i.salesOrderId === soId);
@@ -42,13 +58,26 @@ export const SalesOrders = () => {
     setFormError('');
     if (!customerId) { setFormError('Select a customer from Contact Master.'); return; }
     if (lines.some((l) => !l.productId || Number(l.quantity) <= 0)) { setFormError('Each row needs a product and quantity > 0.'); return; }
+    setBusy(true);
     try {
       const so = await createSalesOrder(customerId, lines, { date: soDate });
       setSelected(so);
       setView('detail');
     } catch (err) {
       setFormError(err?.message || 'Failed to create sales order.');
+    } finally {
+      setBusy(false);
     }
+  };
+
+  const doConfirmSO = async (id) => {
+    setActionError('');
+    try { await confirmSalesOrder(id); } catch (err) { setActionError(err?.message || 'Confirm failed.'); }
+  };
+  const doCreateInvoice = async (id) => {
+    setActionError('');
+    setBusy(true);
+    try { await createInvoiceFromSO(id); } catch (err) { setActionError(err?.message || 'Create Invoice failed.'); } finally { setBusy(false); }
   };
 
   const input = 'w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm';
@@ -103,7 +132,7 @@ export const SalesOrders = () => {
           <div className="flex justify-end gap-4 text-sm"><span className="text-slate-500">Subtotal {inr(subtotal)}</span><span className="text-slate-500">Tax 18% {inr(tax)}</span><b>Total {inr(subtotal + tax)}</b></div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            <button type="submit" className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>
+            <button type="submit" disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -141,10 +170,11 @@ export const SalesOrders = () => {
             </tbody>
           </table>
           <div className="flex justify-end text-sm"><span className="text-slate-500 mr-2">Total (incl. tax)</span><b>{inr(so.totalAmount)}</b></div>
+          {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button onClick={openNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            {so.status === 'DRAFT' && <button onClick={() => confirmSalesOrder(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
-            {so.status === 'CONFIRMED' && !inv && <button onClick={() => createInvoiceFromSO(so.id)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Create Invoice</button>}
+            {so.status === 'DRAFT' && <button onClick={() => doConfirmSO(so.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
+            {so.status === 'CONFIRMED' && !inv && <button onClick={() => doCreateInvoice(so.id)} disabled={busy} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Creating…' : 'Create Invoice'}</button>}
             {inv && <Link to="/customer-invoices" className="px-6 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">Open Invoice {inv.invNumber}</Link>}
           </div>
         </div>
@@ -158,13 +188,17 @@ export const SalesOrders = () => {
         <h1 className="text-xl font-bold text-slate-900">Sales Orders (List View)</h1>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
+      <div className="relative mb-4">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search SO number, customer, status..." className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
+      </div>
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead><tr className="text-left text-[11px] uppercase text-slate-500 border-b border-slate-100">
             <th className="px-4 py-3">SO No.</th><th className="px-4 py-3">Customer</th><th className="px-4 py-3">Date</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Total</th>
           </tr></thead>
           <tbody>
-            {salesOrders.map((so) => (
+            {visibleSOs.map((so) => (
               <tr key={so.id} onClick={() => openDetail(so)} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40 cursor-pointer">
                 <td className="px-4 py-3 font-bold">{so.soNumber}</td><td className="px-4 py-3">{so.customerName}</td>
                 <td className="px-4 py-3 text-slate-600">{so.date}</td>
@@ -172,7 +206,7 @@ export const SalesOrders = () => {
                 <td className="px-4 py-3 text-right font-semibold">{inr(so.totalAmount)}</td>
               </tr>
             ))}
-            {salesOrders.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No sales orders.</td></tr>}
+            {visibleSOs.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No sales orders.</td></tr>}
           </tbody>
         </table>
       </div>

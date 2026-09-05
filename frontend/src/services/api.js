@@ -93,6 +93,7 @@ export const purchasesAPI = {
   create: (payload) => api.post('/purchases', payload),
   confirm: (id) => api.post(`/purchases/${id}/confirm`),
   createBill: (id) => api.post(`/purchases/${id}/create-bill`),
+  // Vendor Portal: vendor submits bill with their own invoice ref (SUBMITTED, no JE yet)
   vendorSubmitBill: (id, payload) => api.post(`/purchases/${id}/vendor-submit-bill`, payload),
 };
 
@@ -110,7 +111,8 @@ export const journalEntriesAPI = {
   create: (payload) => api.post('/journal-entries', payload),
 };
 
-// Phase 4 Sales Flow (live backend)
+// Phase 4 Sales Flow (live backend). Reads are role-filtered (USER sees own);
+// writes are staff-only except invoice pay (owner-verified for USER portal).
 export const salesAPI = {
   list: (params) => api.get('/sales', { params }),
   get: (id) => api.get(`/sales/${id}`),
@@ -131,4 +133,3 @@ export const paymentsAPI = {
   list: (params) => api.get('/payments', { params }),
   get: (id) => api.get(`/payments/${id}`),
 };
-
