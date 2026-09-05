@@ -76,7 +76,7 @@ async function main() {
 
   // 4. Seed Contacts
   console.log('Seeding Master Contacts...');
-  await prisma.contact.upsert({
+  const vendorAzure = await prisma.contact.upsert({
     where: { email: 'azure@furniture.com' },
     update: {},
     create: {
@@ -104,11 +104,13 @@ async function main() {
     },
   });
 
-  // Seed portal login for customer Nimesh Pathak
+  // Seed portal login for customer Nimesh Pathak & vendor Azure Furniture
   const userPassword = await bcrypt.hash('Password@123', 10);
   await prisma.user.upsert({
     where: { loginId: 'nimeshp' },
-    update: {},
+    update: {
+      contactId: customerNimesh.id,
+    },
     create: {
       loginId: 'nimeshp',
       name: 'Nimesh Pathak',
@@ -116,6 +118,21 @@ async function main() {
       password: userPassword,
       role: 'USER',
       contactId: customerNimesh.id,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { loginId: 'azure01' },
+    update: {
+      contactId: vendorAzure.id,
+    },
+    create: {
+      loginId: 'azure01',
+      name: 'Azure Furniture',
+      email: 'azure@furniture.com',
+      password: userPassword,
+      role: 'USER',
+      contactId: vendorAzure.id,
     },
   });
 

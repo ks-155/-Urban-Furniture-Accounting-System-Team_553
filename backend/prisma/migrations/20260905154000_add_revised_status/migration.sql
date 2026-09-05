@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "DocStatus" ADD VALUE IF NOT EXISTS 'REVISED';
