@@ -152,4 +152,3 @@ export const budgetsAPI = {
 export const dashboardAPI = {
   stats: () => api.get('/dashboard'),
 };
-
