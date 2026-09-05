@@ -109,3 +109,20 @@ export const journalEntriesAPI = {
   list: (params) => api.get('/journal-entries', { params }),
   create: (payload) => api.post('/journal-entries', payload),
 };
+
+// Phase 4 Sales Flow (live backend)
+export const salesAPI = {
+  list: (params) => api.get('/sales', { params }),
+  get: (id) => api.get(`/sales/${id}`),
+  create: (payload) => api.post('/sales', payload),
+  confirm: (id) => api.post(`/sales/${id}/confirm`),
+  createInvoice: (id) => api.post(`/sales/${id}/create-invoice`),
+};
+
+export const invoicesAPI = {
+  list: (params) => api.get('/invoices', { params }),
+  get: (id) => api.get(`/invoices/${id}`),
+  create: (payload) => api.post('/invoices', payload),
+  confirm: (id) => api.post(`/invoices/${id}/confirm`),
+  pay: (id, payload) => api.post(`/invoices/${id}/pay`, payload),
+};

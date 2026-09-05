@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, getApiError, USE_MOCK_FALLBACK, purchasesAPI, billsAPI, journalEntriesAPI, journalsAPI } from '../services/api';
+import { authAPI, getApiError, USE_MOCK_FALLBACK, purchasesAPI, billsAPI, salesAPI, invoicesAPI, journalEntriesAPI, journalsAPI } from '../services/api';
 
 const AccountingContext = createContext();
 
@@ -497,6 +497,47 @@ export const AccountingProvider = ({ children }) => {
     })),
   });
 
+  const normSO = (s) => ({
+    id: s.id,
+    soNumber: s.soNumber,
+    customerId: s.customerId,
+    customerName: s.customer?.name || 'Customer',
+    date: day(s.date),
+    status: s.status,
+    taxRate: num(s.taxRate),
+    taxAmount: num(s.taxAmount),
+    totalAmount: num(s.totalAmount),
+    lines: (s.lines || []).map((l) => ({
+      productId: l.productId,
+      productName: l.product?.name || 'Product',
+      quantity: num(l.quantity),
+      unitPrice: num(l.unitPrice),
+      subtotal: num(l.subtotal),
+    })),
+  });
+
+  const normInvoice = (i) => ({
+    id: i.id,
+    invNumber: i.invNumber,
+    salesOrderId: i.salesOrderId ?? i.salesOrder?.id ?? null,
+    customerId: i.customerId,
+    customerName: i.customer?.name || 'Customer',
+    invoiceDate: day(i.invoiceDate),
+    dueDate: day(i.dueDate),
+    status: i.status,
+    taxRate: num(i.taxRate),
+    taxAmount: num(i.taxAmount),
+    totalAmount: num(i.totalAmount),
+    paidAmount: num(i.paidAmount),
+    lines: (i.lines || []).map((l) => ({
+      productId: l.productId,
+      productName: l.product?.name || 'Product',
+      quantity: num(l.quantity),
+      unitPrice: num(l.unitPrice),
+      subtotal: num(l.subtotal),
+    })),
+  });
+
   const normPayment = (p) => ({
     id: p.id,
     paymentNumber: p.paymentNumber,
@@ -532,29 +573,37 @@ export const AccountingProvider = ({ children }) => {
     })),
   });
 
-  // Pull live purchase/ledger state; returns true on success, false offline
+  // Pull live purchase/sales/ledger state; returns true on success, false offline
   const syncPurchaseFlow = async () => {
     try {
       const isStaff = currentUser?.role === 'ADMIN' || currentUser?.role === 'ACCOUNTANT';
-      const calls = [purchasesAPI.list(), billsAPI.list()];
+      const calls = [purchasesAPI.list(), billsAPI.list(), salesAPI.list(), invoicesAPI.list()];
       if (isStaff) {
         calls.push(journalEntriesAPI.list());
       }
       const results = await Promise.all(calls);
       const poRes = results[0];
       const billRes = results[1];
-      const jeRes = isStaff ? results[2] : { data: { journalEntries: [] } };
+      const soRes = results[2];
+      const invRes = results[3];
+      const jeRes = isStaff ? results[4] : { data: { journalEntries: [] } };
 
       const livePOs = (poRes.data?.purchaseOrders || []).map(normPO);
       const liveBills = (billRes.data?.bills || []).map(normBill);
+      const liveSOs = (soRes.data?.salesOrders || []).map(normSO);
+      const liveInvoices = (invRes.data?.invoices || []).map(normInvoice);
       const liveJEs = (jeRes.data?.journalEntries || []).map(normJE);
-      // Live payments arrive nested inside bills
+
+      // Live payments arrive nested inside bills and invoices
       const livePays = [];
       (billRes.data?.bills || []).forEach((b) => (b.payments || []).forEach((p) => livePays.push({ ...normPayment(p), billId: b.id })));
+      (invRes.data?.invoices || []).forEach((i) => (i.payments || []).forEach((p) => livePays.push({ ...normPayment(p), invoiceId: i.id })));
+
       setPurchaseOrders(livePOs);
       setVendorBills(liveBills);
-      // Live is authoritative for purchase-side payments; keep mock sales receipts
-      setPayments((prev) => [...prev.filter((p) => p.invoiceId != null && p.billId == null), ...livePays]);
+      setSalesOrders(liveSOs);
+      setCustomerInvoices(liveInvoices);
+      setPayments(livePays);
       if (isStaff) setJournalEntries(liveJEs);
       setLiveFlow(true);
       return true;
@@ -744,138 +793,184 @@ export const AccountingProvider = ({ children }) => {
     }
   };
 
-  // Workflow: Sales
-  const createSalesOrder = (customerId, lines, extra = {}) => {
-    const customer = contacts.find(c => c.id === Number(customerId));
-    const subtotal = lines.reduce((sum, l) => sum + (Number(l.quantity) * Number(l.unitPrice)), 0);
-    const taxRate = 18;
-    const taxAmount = Math.round((subtotal * taxRate) / 100);
-    const totalAmount = subtotal + taxAmount;
-    const soNumber = getNextSequence('SO', salesOrders);
-
-    const newSO = {
-      id: salesOrders.length + 1,
-      soNumber,
+  // Workflow: Sales (live-first, mock fallback)
+  const createSalesOrder = async (customerId, lines, extra = {}) => {
+    const payload = {
       customerId: Number(customerId),
-      customerName: customer?.name || 'Customer',
       date: extra.date || new Date().toISOString().split('T')[0],
-      status: 'DRAFT',
-      taxRate,
-      taxAmount,
-      totalAmount,
-      lines: lines.map(l => ({
-        productId: Number(l.productId),
-        productName: products.find(p => p.id === Number(l.productId))?.name || 'Product',
-        quantity: Number(l.quantity),
-        unitPrice: Number(l.unitPrice),
-        subtotal: Number(l.quantity) * Number(l.unitPrice),
-        ...(l.analytic ? { analytic: l.analytic } : {}),
-      }))
+      taxRate: 18,
+      lines: lines.map((l) => ({ productId: Number(l.productId), quantity: Number(l.quantity), unitPrice: Number(l.unitPrice) })),
     };
+    try {
+      const res = await salesAPI.create(payload);
+      await syncPurchaseFlow();
+      return normSO(res.data.salesOrder);
+    } catch {
+      if (!USE_MOCK_FALLBACK) throw new Error('Backend unreachable.');
+      const customer = contacts.find(c => c.id === Number(customerId));
+      const subtotal = lines.reduce((sum, l) => sum + (Number(l.quantity) * Number(l.unitPrice)), 0);
+      const taxRate = 18;
+      const taxAmount = Math.round((subtotal * taxRate) / 100);
+      const totalAmount = subtotal + taxAmount;
+      const soNumber = getNextSequence('SO', salesOrders);
 
-    setSalesOrders(prev => [newSO, ...prev]);
-    return newSO;
-  };
+      const newSO = {
+        id: salesOrders.length + 1,
+        soNumber,
+        customerId: Number(customerId),
+        customerName: customer?.name || 'Customer',
+        date: extra.date || new Date().toISOString().split('T')[0],
+        status: 'DRAFT',
+        taxRate,
+        taxAmount,
+        totalAmount,
+        lines: lines.map(l => ({
+          productId: Number(l.productId),
+          productName: products.find(p => p.id === Number(l.productId))?.name || 'Product',
+          quantity: Number(l.quantity),
+          unitPrice: Number(l.unitPrice),
+          subtotal: Number(l.quantity) * Number(l.unitPrice),
+          ...(l.analytic ? { analytic: l.analytic } : {}),
+        }))
+      };
 
-  const confirmSalesOrder = (soId) => {
-    setSalesOrders(prev => prev.map(so => so.id === soId ? { ...so, status: 'CONFIRMED' } : so));
-  };
-
-  const createInvoiceFromSO = (soId) => {
-    const so = salesOrders.find(s => s.id === soId);
-    if (!so) return null;
-
-    const invNumber = getNextSequence('INV', customerInvoices);
-    const newInvoice = {
-      id: customerInvoices.length + 1,
-      invNumber,
-      salesOrderId: so.id,
-      customerId: so.customerId,
-      customerName: so.customerName,
-      invoiceDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'DRAFT',
-      totalAmount: so.totalAmount,
-      paidAmount: 0,
-      lines: so.lines
-    };
-
-    setCustomerInvoices(prev => [newInvoice, ...prev]);
-    setSalesOrders(prev => prev.map(s => s.id === soId ? { ...s, status: 'INVOICED' } : s));
-    return newInvoice;
-  };
-
-  const confirmCustomerInvoice = (invId) => {
-    const inv = customerInvoices.find(i => i.id === invId);
-    if (!inv) return;
-
-    // Automated Double Entry: Dr Debtors, Cr Sales Income, Cr Tax Payable
-    const subtotal = inv.lines.reduce((s, l) => s + l.subtotal, 0);
-    const taxAmount = inv.totalAmount - subtotal;
-    const entryNumber = getNextSequence('JE', journalEntries);
-
-    const items = [
-      { accountCode: '1003', accountName: `Debtors (${inv.customerName})`, debit: inv.totalAmount, credit: 0 },
-      { accountCode: '4001', accountName: 'Sales Income', debit: 0, credit: subtotal }
-    ];
-    if (taxAmount > 0) {
-      items.push({ accountCode: '2002', accountName: 'Tax Payable (GST 18%)', debit: 0, credit: taxAmount });
+      setSalesOrders(prev => [newSO, ...prev]);
+      return newSO;
     }
-
-    const newEntry = {
-      id: journalEntries.length + 1,
-      entryNumber,
-      date: inv.invoiceDate,
-      reference: `${inv.invNumber} Confirm (${inv.customerName})`,
-      journalName: 'Sales Journal',
-      status: 'POSTED',
-      items
-    };
-
-    setJournalEntries(prev => [newEntry, ...prev]);
-    setCustomerInvoices(prev => prev.map(i => i.id === invId ? { ...i, status: 'CONFIRMED' } : i));
   };
 
-  const registerInvoicePayment = (invId, paymentMethod = 'BANK') => {
-    const inv = customerInvoices.find(i => i.id === invId);
-    if (!inv) return;
+  const confirmSalesOrder = async (soId) => {
+    try {
+      await salesAPI.confirm(soId);
+      await syncPurchaseFlow();
+      return { success: true };
+    } catch {
+      if (!USE_MOCK_FALLBACK) throw new Error('Backend unreachable.');
+      setSalesOrders(prev => prev.map(so => so.id === soId ? { ...so, status: 'CONFIRMED' } : so));
+      return { success: true };
+    }
+  };
 
-    const payNumber = getNextSequence('PAY', payments);
-    const newPayment = {
-      id: payments.length + 1,
-      paymentNumber: payNumber,
-      paymentType: 'INBOUND',
-      partnerId: inv.customerId,
-      partnerName: inv.customerName,
-      invoiceId: inv.id,
-      invNumber: inv.invNumber,
-      amount: inv.totalAmount,
-      paymentMethod,
-      date: new Date().toISOString().split('T')[0],
-      status: 'POSTED'
-    };
+  const createInvoiceFromSO = async (soId) => {
+    try {
+      const res = await salesAPI.createInvoice(soId);
+      await syncPurchaseFlow();
+      return normInvoice(res.data.invoice);
+    } catch {
+      if (!USE_MOCK_FALLBACK) throw new Error('Backend unreachable.');
+      const so = salesOrders.find(s => s.id === soId);
+      if (!so) return null;
 
-    // Automated Double Entry: Dr Bank/Cash, Cr Debtors
-    const debitAccountCode = paymentMethod === 'BANK' ? '1002' : '1001';
-    const debitAccountName = paymentMethod === 'BANK' ? 'Bank Account (HDFC)' : 'Cash on Hand';
-    const entryNumber = getNextSequence('JE', journalEntries);
+      const invNumber = getNextSequence('INV', customerInvoices);
+      const newInvoice = {
+        id: customerInvoices.length + 1,
+        invNumber,
+        salesOrderId: so.id,
+        customerId: so.customerId,
+        customerName: so.customerName,
+        invoiceDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'DRAFT',
+        taxRate: so.taxRate || 18,
+        taxAmount: so.taxAmount || 0,
+        totalAmount: so.totalAmount,
+        paidAmount: 0,
+        lines: so.lines
+      };
 
-    const newEntry = {
-      id: journalEntries.length + 1,
-      entryNumber,
-      date: newPayment.date,
-      reference: `Receipt for ${inv.invNumber} via ${paymentMethod}`,
-      journalName: paymentMethod === 'BANK' ? 'Bank Journal' : 'Cash Journal',
-      status: 'POSTED',
-      items: [
-        { accountCode: debitAccountCode, accountName: debitAccountName, debit: inv.totalAmount, credit: 0 },
-        { accountCode: '1003', accountName: `Debtors (${inv.customerName})`, debit: 0, credit: inv.totalAmount }
-      ]
-    };
+      setCustomerInvoices(prev => [newInvoice, ...prev]);
+      setSalesOrders(prev => prev.map(s => s.id === soId ? { ...s, status: 'INVOICED' } : s));
+      return newInvoice;
+    }
+  };
 
-    setPayments(prev => [newPayment, ...prev]);
-    setJournalEntries(prev => [newEntry, ...prev]);
-    setCustomerInvoices(prev => prev.map(i => i.id === invId ? { ...i, status: 'PAID', paidAmount: inv.totalAmount } : i));
+  const confirmCustomerInvoice = async (invId) => {
+    try {
+      await invoicesAPI.confirm(invId);
+      await syncPurchaseFlow();
+      return { success: true };
+    } catch (err) {
+      if (!USE_MOCK_FALLBACK) return { success: false, error: getApiError(err) };
+      const inv = customerInvoices.find(i => i.id === invId);
+      if (!inv) return { success: false };
+
+      // Automated Double Entry: Dr Debtors, Cr Sales Income, Cr Tax Payable
+      const subtotal = inv.lines.reduce((s, l) => s + l.subtotal, 0);
+      const taxAmount = inv.totalAmount - subtotal;
+      const entryNumber = getNextSequence('JE', journalEntries);
+
+      const items = [
+        { accountCode: '1003', accountName: `Debtors (${inv.customerName})`, debit: inv.totalAmount, credit: 0 },
+        { accountCode: '4001', accountName: 'Sales Income', debit: 0, credit: subtotal }
+      ];
+      if (taxAmount > 0) {
+        items.push({ accountCode: '2002', accountName: 'Tax Payable (GST 18%)', debit: 0, credit: taxAmount });
+      }
+
+      const newEntry = {
+        id: journalEntries.length + 1,
+        entryNumber,
+        date: inv.invoiceDate,
+        reference: `${inv.invNumber} Confirm (${inv.customerName})`,
+        journalName: 'Sales Journal',
+        status: 'POSTED',
+        items
+      };
+
+      setJournalEntries(prev => [newEntry, ...prev]);
+      setCustomerInvoices(prev => prev.map(i => i.id === invId ? { ...i, status: 'CONFIRMED' } : i));
+      return { success: true };
+    }
+  };
+
+  const registerInvoicePayment = async (invId, paymentMethod = 'BANK') => {
+    try {
+      const res = await invoicesAPI.pay(invId, { paymentMethod });
+      await syncPurchaseFlow();
+      return { success: true, amountDue: res.data?.amountDue ?? 0 };
+    } catch (err) {
+      if (!USE_MOCK_FALLBACK) return { success: false, error: getApiError(err) };
+      const inv = customerInvoices.find(i => i.id === invId);
+      if (!inv) return { success: false };
+
+      const payNumber = getNextSequence('PAY', payments);
+      const newPayment = {
+        id: payments.length + 1,
+        paymentNumber: payNumber,
+        paymentType: 'INBOUND',
+        partnerId: inv.customerId,
+        partnerName: inv.customerName,
+        invoiceId: inv.id,
+        invNumber: inv.invNumber,
+        amount: inv.totalAmount,
+        paymentMethod,
+        date: new Date().toISOString().split('T')[0],
+        status: 'POSTED'
+      };
+
+      // Automated Double Entry: Dr Bank/Cash, Cr Debtors
+      const debitAccountCode = paymentMethod === 'BANK' ? '1002' : '1001';
+      const debitAccountName = paymentMethod === 'BANK' ? 'Bank Account (HDFC)' : 'Cash on Hand';
+      const entryNumber = getNextSequence('JE', journalEntries);
+
+      const newEntry = {
+        id: journalEntries.length + 1,
+        entryNumber,
+        date: newPayment.date,
+        reference: `Receipt for ${inv.invNumber} via ${paymentMethod}`,
+        journalName: paymentMethod === 'BANK' ? 'Bank Journal' : 'Cash Journal',
+        status: 'POSTED',
+        items: [
+          { accountCode: debitAccountCode, accountName: debitAccountName, debit: inv.totalAmount, credit: 0 },
+          { accountCode: '1003', accountName: `Debtors (${inv.customerName})`, debit: 0, credit: inv.totalAmount }
+        ]
+      };
+
+      setPayments(prev => [newPayment, ...prev]);
+      setJournalEntries(prev => [newEntry, ...prev]);
+      setCustomerInvoices(prev => prev.map(i => i.id === invId ? { ...i, status: 'PAID', paidAmount: inv.totalAmount } : i));
+      return { success: true };
+    }
   };
 
   // Manual Journal Entry (live-first; strict server balance check; mock fallback)

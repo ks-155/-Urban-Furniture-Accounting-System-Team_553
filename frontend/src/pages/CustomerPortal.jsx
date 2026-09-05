@@ -431,9 +431,9 @@ export const CustomerPortal = () => {
         title={`Pay Dues — ${payFor?.invNumber}`}
         dueAmount={payFor ? Number(payFor.totalAmount || 0) - Number(payFor.paidAmount || 0) : 0}
         onClose={() => setPayFor(null)}
-        onConfirm={(method) => {
-          if (payFor.status === 'DRAFT') confirmCustomerInvoice(payFor.id);
-          registerInvoicePayment(payFor.id, method);
+        onConfirm={async (method) => {
+          if (payFor.status === 'DRAFT') await confirmCustomerInvoice(payFor.id);
+          await registerInvoicePayment(payFor.id, method);
           setPayFor(null);
         }}
       />

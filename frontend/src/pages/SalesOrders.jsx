@@ -37,14 +37,18 @@ export const SalesOrders = () => {
   const subtotal = lines.reduce((s, l) => s + lineTotal(l), 0);
   const tax = Math.round((subtotal * 18) / 100);
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setFormError('');
     if (!customerId) { setFormError('Select a customer from Contact Master.'); return; }
     if (lines.some((l) => !l.productId || Number(l.quantity) <= 0)) { setFormError('Each row needs a product and quantity > 0.'); return; }
-    const so = createSalesOrder(customerId, lines, { date: soDate });
-    setSelected(so);
-    setView('detail');
+    try {
+      const so = await createSalesOrder(customerId, lines, { date: soDate });
+      setSelected(so);
+      setView('detail');
+    } catch (err) {
+      setFormError(err?.message || 'Failed to create sales order.');
+    }
   };
 
   const input = 'w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm';

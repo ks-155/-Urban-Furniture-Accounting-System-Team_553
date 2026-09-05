@@ -10,6 +10,8 @@ const journalRoutes = require('./routes/journalRoutes');
 const analyticRoutes = require('./routes/analyticRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const billRoutes = require('./routes/billRoutes');
+const salesRoutes = require('./routes/salesRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
 const journalEntryRoutes = require('./routes/journalEntryRoutes');
 
 const app = express();
@@ -28,6 +30,8 @@ app.use('/api/journals', journalRoutes);
 app.use('/api/analytic-accounts', analyticRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/bills', billRoutes);
+app.use('/api/sales', salesRoutes);
+app.use('/api/invoices', invoiceRoutes);
 app.use('/api/journal-entries', journalEntryRoutes);
 
 // Health Check Route
