@@ -113,10 +113,11 @@ async function runTests() {
     console.log('✅ 6. Short loginId (<6 chars) rejected correctly:', shortLogin.body.error);
 
     // 7. Successful signup (Role: USER)
+    const testSuffix = Date.now().toString().slice(-4);
     const validSignup = await request('POST', '/api/auth/signup', {
       name: 'Rahul Sharma',
-      loginId: 'rahuls12',
-      email: 'rahul.sharma@example.com',
+      loginId: `rahul${testSuffix}`,
+      email: `rahul.${testSuffix}@example.com`,
       password: 'Password@123',
       confirmPassword: 'Password@123',
     });
@@ -130,7 +131,7 @@ async function runTests() {
       Authorization: `Bearer ${userToken}`,
     });
     console.assert(meRes.status === 200, '/me failed');
-    console.assert(meRes.body.user.loginId === 'rahuls12', 'Profile mismatch');
+    console.assert(meRes.body.user.loginId === `rahul${testSuffix}`, 'Profile mismatch');
     console.log('✅ 8. Authenticated /api/auth/me returned current user:', meRes.body.user.name);
 
     // 9. Create User by Admin
@@ -139,8 +140,8 @@ async function runTests() {
       '/api/users',
       {
         name: 'Second Accountant',
-        loginId: 'accountant02',
-        email: 'acc2@urbanfurniture.com',
+        loginId: `acc${testSuffix}`,
+        email: `acc${testSuffix}@urbanfurniture.com`,
         role: 'ACCOUNTANT',
         password: 'Password@123',
         confirmPassword: 'Password@123',

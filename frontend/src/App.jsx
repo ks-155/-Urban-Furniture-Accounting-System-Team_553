@@ -18,12 +18,13 @@ import { SalesOrders } from './pages/SalesOrders';
 import { CustomerInvoices } from './pages/CustomerInvoices';
 import { JournalEntries } from './pages/JournalEntries';
 import { Budgets } from './pages/Budgets';
+import { Payments } from './pages/Payments';
 import { BalanceSheet, ProfitLoss, BudgetReport } from './pages/Reports';
 
 const ComingSoon = ({ title }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
     <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-    <p className="text-sm text-slate-500 mt-2">Phase 2–4 screen — mock data lives in AccountingContext until then.</p>
+    <p className="text-sm text-slate-500 mt-2">Screen loading — please navigate using menu.</p>
     <Link to="/" className="inline-block mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">Back to Dashboard</Link>
   </div>
 );
@@ -41,7 +42,7 @@ function Shell() {
         <Route path="/customer-invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
         <Route path="/purchase-orders" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
         <Route path="/vendor-bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
-        <Route path="/payments" element={<StaffRoute><ComingSoon title="Payments ledger (Phase 3/4 — pay from Bill/Invoice)" /></StaffRoute>} />
+        <Route path="/payments" element={<StaffRoute><Payments /></StaffRoute>} />
         <Route path="/contacts" element={<StaffRoute><Contacts /></StaffRoute>} />
         <Route path="/products" element={<StaffRoute><Products /></StaffRoute>} />
         <Route path="/chart-of-accounts" element={<StaffRoute><ChartOfAccounts /></StaffRoute>} />

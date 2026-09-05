@@ -126,3 +126,9 @@ export const invoicesAPI = {
   confirm: (id) => api.post(`/invoices/${id}/confirm`),
   pay: (id, payload) => api.post(`/invoices/${id}/pay`, payload),
 };
+
+export const paymentsAPI = {
+  list: (params) => api.get('/payments', { params }),
+  get: (id) => api.get(`/payments/${id}`),
+};
+

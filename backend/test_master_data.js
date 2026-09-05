@@ -77,13 +77,14 @@ async function runTests() {
     console.log('✅ 2. Filter contacts by VENDOR works properly.');
 
     // 3. Create a new Contact
+    const uniqueEmail = `supply${Date.now().toString().slice(-4)}@royaloak.com`;
     const newContactRes = await request(
       'POST',
       '/api/contacts',
       {
         name: 'Royal Oak Furnishings',
         type: 'VENDOR',
-        email: 'supply@royaloak.com',
+        email: uniqueEmail,
         mobile: '9123456780',
         city: 'Bangalore',
         state: 'Karnataka',
@@ -151,18 +152,19 @@ async function runTests() {
     console.log(`✅ 8. Chart of Accounts listed ${accountsRes.body.accounts.length} accounts with computed balances.`);
 
     // 9. Create a new Account
+    const accSuffix = Date.now().toString().slice(-3);
     const newAccRes = await request(
       'POST',
       '/api/accounts',
       {
-        code: '5002',
+        code: `5${accSuffix}`,
         name: 'Freight & Delivery Expense',
         type: 'EXPENSE',
       },
       authHeaders
     );
     console.assert(newAccRes.status === 201, 'Create account failed');
-    console.log('✅ 9. Create Account 5002 succeeded:', newAccRes.body.account.name);
+    console.log(`✅ 9. Create Account 5${accSuffix} succeeded:`, newAccRes.body.account.name);
 
     // 10. List Journals
     const journalsRes = await request('GET', '/api/journals');
@@ -177,14 +179,14 @@ async function runTests() {
       '/api/journals',
       {
         name: 'Petty Cash Journal',
-        code: 'PCASH',
+        code: `PC${accSuffix}`,
         type: 'CASH',
         defaultAccountId: accountsRes.body.accounts.find((a) => a.code === '1001').id,
       },
       authHeaders
     );
     console.assert(newJournalRes.status === 201, 'Create journal failed');
-    console.log('✅ 11. Create Journal PCASH succeeded:', newJournalRes.body.journal.name);
+    console.log(`✅ 11. Create Journal PC${accSuffix} succeeded:`, newJournalRes.body.journal.name);
 
     // 12. List Analytic Accounts
     const analyticRes = await request('GET', '/api/analytic-accounts');
@@ -197,7 +199,7 @@ async function runTests() {
       'POST',
       '/api/analytic-accounts',
       {
-        name: 'Showroom Expansion 2026',
+        name: `Showroom Expansion ${accSuffix}`,
         type: 'EXPENSE',
       },
       authHeaders
