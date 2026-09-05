@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
+import { CustomerPortal } from './CustomerPortal';
 import { ShoppingBag, ShoppingCart, PiggyBank, Plus, FileBarChart } from 'lucide-react';
 
 const Stat = ({ label, value }) => (
@@ -26,6 +27,11 @@ export const Dashboard = () => {
 
   const revenue = customerInvoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + Number(i.totalAmount || 0), 0);
   const expense = vendorBills.filter((b) => b.status === 'PAID').reduce((s, b) => s + Number(b.totalAmount || 0), 0);
+
+  // Excalidraw role rule: USER (customer portal) must NEVER see company books
+  if (currentUser?.role === 'USER') {
+    return <CustomerPortal />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

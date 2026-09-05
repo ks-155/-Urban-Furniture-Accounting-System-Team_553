@@ -74,8 +74,20 @@ export const Navbar = ({ onOpenCreateUser }) => {
               </div>
             </Link>
 
-            {/* Main Navigation Menus */}
-            {currentUser && (
+            {/* Main Navigation Menus — hidden for USER (customer portal sees no company books) */}
+            {currentUser && currentUser.role === 'USER' && (
+              <nav className="hidden md:flex items-center space-x-1 pl-4">
+                <Link
+                  to="/"
+                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    location.pathname === '/' ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  My Invoices
+                </Link>
+              </nav>
+            )}
+            {currentUser && currentUser.role !== 'USER' && (
               <nav className="hidden md:flex items-center space-x-1 pl-4">
                 
                 {/* 1. SALES */}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AccountingProvider } from './context/AccountingContext';
 import { Navbar } from './components/Navbar';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, StaffRoute } from './components/ProtectedRoute';
 import { CreateUserModal } from './components/CreateUserModal';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -37,21 +37,21 @@ function Shell() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/sales-orders" element={<ProtectedRoute><SalesOrders /></ProtectedRoute>} />
-        <Route path="/customer-invoices" element={<ProtectedRoute><CustomerInvoices /></ProtectedRoute>} />
-        <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
-        <Route path="/vendor-bills" element={<ProtectedRoute><VendorBills /></ProtectedRoute>} />
-        <Route path="/payments" element={<ProtectedRoute><ComingSoon title="Payments ledger (Phase 3/4 — pay from Bill/Invoice)" /></ProtectedRoute>} />
-        <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-        <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-        <Route path="/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
-        <Route path="/journals" element={<ProtectedRoute><Journals /></ProtectedRoute>} />
-        <Route path="/budgets" element={<ProtectedRoute><Budgets /></ProtectedRoute>} />
-        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-        <Route path="/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
-        <Route path="/reports/balance-sheet" element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
-        <Route path="/reports/profit-loss" element={<ProtectedRoute><ProfitLoss /></ProtectedRoute>} />
-        <Route path="/reports/budget-report" element={<ProtectedRoute><BudgetReport /></ProtectedRoute>} />
+        <Route path="/sales-orders" element={<StaffRoute><SalesOrders /></StaffRoute>} />
+        <Route path="/customer-invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
+        <Route path="/purchase-orders" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
+        <Route path="/vendor-bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
+        <Route path="/payments" element={<StaffRoute><ComingSoon title="Payments ledger (Phase 3/4 — pay from Bill/Invoice)" /></StaffRoute>} />
+        <Route path="/contacts" element={<StaffRoute><Contacts /></StaffRoute>} />
+        <Route path="/products" element={<StaffRoute><Products /></StaffRoute>} />
+        <Route path="/chart-of-accounts" element={<StaffRoute><ChartOfAccounts /></StaffRoute>} />
+        <Route path="/journals" element={<StaffRoute><Journals /></StaffRoute>} />
+        <Route path="/budgets" element={<StaffRoute><Budgets /></StaffRoute>} />
+        <Route path="/analytics" element={<StaffRoute><Analytics /></StaffRoute>} />
+        <Route path="/journal-entries" element={<StaffRoute><JournalEntries /></StaffRoute>} />
+        <Route path="/reports/balance-sheet" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
+        <Route path="/reports/profit-loss" element={<StaffRoute><ProfitLoss /></StaffRoute>} />
+        <Route path="/reports/budget-report" element={<StaffRoute><BudgetReport /></StaffRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <CreateUserModal isOpen={createUserOpen} onClose={() => setCreateUserOpen(false)} />
