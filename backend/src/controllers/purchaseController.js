@@ -25,7 +25,16 @@ async function getPurchaseOrders(req, res) {
     const where = {};
 
     if (status) where.status = status.toUpperCase();
-    if (vendorId) where.vendorId = parseInt(vendorId, 10);
+
+    // Role-based security: if logged in as portal USER (Vendor), only return their own POs!
+    if (req.user && req.user.role === 'USER') {
+      if (!req.user.contactId) {
+        return res.status(200).json({ purchaseOrders: [] });
+      }
+      where.vendorId = req.user.contactId;
+    } else if (vendorId) {
+      where.vendorId = parseInt(vendorId, 10);
+    }
 
     const pos = await prisma.purchaseOrder.findMany({
       where,
@@ -65,6 +74,11 @@ async function getPurchaseOrderById(req, res) {
       return res.status(404).json({ error: 'Purchase order not found.' });
     }
 
+    // Role-based protection
+    if (req.user && req.user.role === 'USER' && req.user.contactId && po.vendorId !== req.user.contactId) {
+      return res.status(403).json({ error: 'Access denied: You can only view your own Purchase Orders.' });
+    }
+
     return res.status(200).json({ purchaseOrder: po });
   } catch (error) {
     console.error('getPurchaseOrderById error:', error);
@@ -72,7 +86,7 @@ async function getPurchaseOrderById(req, res) {
   }
 }
 
-// POST /api/purchases (Create Purchase Order)
+// POST /api/purchases (Create Purchase Order by Accountant)
 async function createPurchaseOrder(req, res) {
   try {
     const { vendorId, lines, date } = req.body;
@@ -144,7 +158,7 @@ async function createPurchaseOrder(req, res) {
   }
 }
 
-// POST /api/purchases/:id/confirm (Confirm PO)
+// POST /api/purchases/:id/confirm (Confirm PO by Accountant)
 async function confirmPurchaseOrder(req, res) {
   try {
     const { id } = req.params;
@@ -168,7 +182,7 @@ async function confirmPurchaseOrder(req, res) {
   }
 }
 
-// POST /api/purchases/:id/create-bill (Convert PO to Vendor Bill)
+// POST /api/purchases/:id/create-bill (Internal: Accountant converts PO to Vendor Bill)
 async function createBillFromPO(req, res) {
   try {
     const { id } = req.params;
@@ -205,7 +219,7 @@ async function createBillFromPO(req, res) {
 
     const today = new Date();
     const dueDate = new Date();
-    dueDate.setDate(today.getDate() + 15); // default 15-day due date
+    dueDate.setDate(today.getDate() + 15);
 
     const billLines = po.lines.map((l) => ({
       productId: l.productId,
@@ -251,10 +265,99 @@ async function createBillFromPO(req, res) {
   }
 }
 
+// POST /api/purchases/:id/vendor-submit-bill (External Vendor Portal: Vendor submits bill against PO)
+async function vendorSubmitBill(req, res) {
+  try {
+    const { id } = req.params;
+    const poId = parseInt(id, 10);
+    const { vendorInvoiceRef, billDate } = req.body;
+
+    const po = await prisma.purchaseOrder.findUnique({
+      where: { id: poId },
+      include: { lines: true, vendor: true },
+    });
+
+    if (!po) {
+      return res.status(404).json({ error: 'Purchase order not found.' });
+    }
+
+    if (req.user && req.user.role === 'USER' && req.user.contactId && po.vendorId !== req.user.contactId) {
+      return res.status(403).json({ error: 'Access denied: You can only bill your own Purchase Orders.' });
+    }
+
+    if (po.status === 'BILLED') {
+      return res.status(400).json({ error: 'This Purchase Order has already been billed.' });
+    }
+
+    if (po.status === 'DRAFT') {
+      return res.status(400).json({ error: 'Cannot submit a bill for an unconfirmed PO.' });
+    }
+
+    const lastBill = await prisma.vendorBill.findFirst({
+      orderBy: { id: 'desc' },
+      select: { billNumber: true },
+    });
+    let nextNum = 1;
+    if (lastBill && lastBill.billNumber) {
+      const match = lastBill.billNumber.match(/\d+$/);
+      if (match) nextNum = parseInt(match[0], 10) + 1;
+    }
+    const billNumber = `BILL${String(nextNum).padStart(4, '0')}`;
+
+    const today = billDate ? new Date(billDate) : new Date();
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + 15);
+
+    const billLines = po.lines.map((l) => ({
+      productId: l.productId,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      subtotal: l.subtotal,
+    }));
+
+    const bill = await prisma.vendorBill.create({
+      data: {
+        billNumber,
+        reference: vendorInvoiceRef ? vendorInvoiceRef.trim() : null,
+        purchaseOrderId: po.id,
+        vendorId: po.vendorId,
+        billDate: today,
+        dueDate,
+        status: 'SUBMITTED', // SUBMITTED by Vendor, awaiting Accountant approval!
+        totalAmount: po.totalAmount,
+        paidAmount: 0,
+        lines: {
+          create: billLines,
+        },
+      },
+      include: {
+        vendor: true,
+        lines: { include: { product: true } },
+        purchaseOrder: { select: { id: true, poNumber: true } },
+      },
+    });
+
+    // Mark PO as BILLED
+    await prisma.purchaseOrder.update({
+      where: { id: po.id },
+      data: { status: 'BILLED' },
+    });
+
+    return res.status(201).json({
+      message: 'Vendor bill submitted successfully. Awaiting Urban Furniture accountant approval.',
+      bill,
+    });
+  } catch (error) {
+    console.error('vendorSubmitBill error:', error);
+    return res.status(500).json({ error: 'Failed to submit vendor bill.' });
+  }
+}
+
 module.exports = {
   getPurchaseOrders,
   getPurchaseOrderById,
   createPurchaseOrder,
   confirmPurchaseOrder,
   createBillFromPO,
+  vendorSubmitBill,
 };

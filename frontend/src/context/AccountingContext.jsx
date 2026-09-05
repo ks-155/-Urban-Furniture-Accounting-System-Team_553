@@ -535,9 +535,16 @@ export const AccountingProvider = ({ children }) => {
   // Pull live purchase/ledger state; returns true on success, false offline
   const syncPurchaseFlow = async () => {
     try {
-      const [poRes, billRes, jeRes] = await Promise.all([
-        purchasesAPI.list(), billsAPI.list(), journalEntriesAPI.list(),
-      ]);
+      const isStaff = currentUser?.role === 'ADMIN' || currentUser?.role === 'ACCOUNTANT';
+      const calls = [purchasesAPI.list(), billsAPI.list()];
+      if (isStaff) {
+        calls.push(journalEntriesAPI.list());
+      }
+      const results = await Promise.all(calls);
+      const poRes = results[0];
+      const billRes = results[1];
+      const jeRes = isStaff ? results[2] : { data: { journalEntries: [] } };
+
       const livePOs = (poRes.data?.purchaseOrders || []).map(normPO);
       const liveBills = (billRes.data?.bills || []).map(normBill);
       const liveJEs = (jeRes.data?.journalEntries || []).map(normJE);
@@ -548,7 +555,7 @@ export const AccountingProvider = ({ children }) => {
       setVendorBills(liveBills);
       // Live is authoritative for purchase-side payments; keep mock sales receipts
       setPayments((prev) => [...prev.filter((p) => p.invoiceId != null && p.billId == null), ...livePays]);
-      setJournalEntries(liveJEs);
+      if (isStaff) setJournalEntries(liveJEs);
       setLiveFlow(true);
       return true;
     } catch {
@@ -557,12 +564,12 @@ export const AccountingProvider = ({ children }) => {
     }
   };
 
-  // Sync once a session exists (purchase/bill/JE routes are staff-only)
+  // Sync once a session exists
   useEffect(() => {
-    if (token && (currentUser?.role === 'ADMIN' || currentUser?.role === 'ACCOUNTANT')) {
+    if (token) {
       syncPurchaseFlow();
     }
-  }, [token]);
+  }, [token, currentUser?.role]);
 
   // ---- Workflow: Purchase (live-first, mock fallback) ----
   const createPurchaseOrder = async (vendorId, lines, extra = {}) => {
@@ -642,6 +649,16 @@ export const AccountingProvider = ({ children }) => {
       setVendorBills(prev => [newBill, ...prev]);
       setPurchaseOrders(prev => prev.map(p => p.id === poId ? { ...p, status: 'BILLED' } : p));
       return newBill;
+    }
+  };
+
+  const vendorSubmitBill = async (poId, payload) => {
+    try {
+      const res = await purchasesAPI.vendorSubmitBill(poId, payload);
+      await syncPurchaseFlow();
+      return { success: true, bill: normBill(res.data.bill) };
+    } catch (err) {
+      return { success: false, error: getApiError(err) };
     }
   };
 
@@ -939,6 +956,7 @@ export const AccountingProvider = ({ children }) => {
       createPurchaseOrder,
       confirmPurchaseOrder,
       createBillFromPO,
+      vendorSubmitBill,
       vendorBills,
       confirmVendorBill,
       registerBillPayment,

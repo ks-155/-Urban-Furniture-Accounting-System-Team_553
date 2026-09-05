@@ -42,6 +42,7 @@ enum JournalType {
 
 enum DocStatus {
   DRAFT
+  SUBMITTED
   CONFIRMED
   INVOICED
   BILLED
@@ -209,6 +210,7 @@ model PurchaseOrderLine {
 model VendorBill {
   id              Int              @id @default(autoincrement())
   billNumber      String           @unique
+  reference       String?
   purchaseOrderId Int?
   purchaseOrder   PurchaseOrder?   @relation(fields: [purchaseOrderId], references: [id])
   vendorId        Int

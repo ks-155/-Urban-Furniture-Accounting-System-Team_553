@@ -33,7 +33,14 @@ async function getBills(req, res) {
     const where = {};
 
     if (status) where.status = status.toUpperCase();
-    if (vendorId) where.vendorId = parseInt(vendorId, 10);
+    if (req.user && req.user.role === 'USER') {
+      if (!req.user.contactId) {
+        return res.status(200).json({ bills: [] });
+      }
+      where.vendorId = req.user.contactId;
+    } else if (vendorId) {
+      where.vendorId = parseInt(vendorId, 10);
+    }
 
     const bills = await prisma.vendorBill.findMany({
       where,
@@ -167,8 +174,8 @@ async function confirmBill(req, res) {
 
     if (!bill) return res.status(404).json({ error: 'Vendor bill not found.' });
 
-    if (bill.status !== 'DRAFT') {
-      return res.status(400).json({ error: `Cannot confirm bill with status ${bill.status}.` });
+    if (bill.status !== 'DRAFT' && bill.status !== 'SUBMITTED') {
+      return res.status(400).json({ error: `Cannot confirm bill with status ${bill.status}. Only DRAFT or SUBMITTED bills can be confirmed.` });
     }
 
     // 1. Fetch Accounts for Purchase Journal Entry:

@@ -42,8 +42,8 @@ export const VendorBills = () => {
           <div className="px-4 py-3 border-b border-slate-100 font-bold text-slate-900">Vendor Bills (List)</div>
           {vendorBills.map((b) => (
             <button key={b.id} onClick={() => setSelectedId(b.id)} className={`w-full text-left px-4 py-3 border-b border-slate-50 last:border-0 hover:bg-blue-50/40 ${b.id === selectedId ? 'bg-blue-50/60' : ''}`}>
-              <p className="font-bold text-sm text-slate-900">{b.billNumber} <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{b.status}</span></p>
-              <p className="text-xs text-slate-500">{b.vendorName} • {inr(b.totalAmount)}</p>
+              <p className="font-bold text-sm text-slate-900">{b.billNumber} <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${b.status === 'SUBMITTED' ? 'bg-amber-100 text-amber-800' : b.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' : b.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>{b.status}</span></p>
+              <p className="text-xs text-slate-500">{b.vendorName} {b.reference ? `(${b.reference})` : ''} • {inr(b.totalAmount)}</p>
             </button>
           ))}
           {vendorBills.length === 0 && <p className="px-4 py-8 text-sm text-slate-500 text-center">No bills yet — create one from a Purchase Order.</p>}
@@ -57,8 +57,9 @@ export const VendorBills = () => {
                 <h1 className="text-xl font-bold text-slate-900">Vendor Bill {bill.billNumber}</h1>
                 <button onClick={() => setSelectedId(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Vendor</p><p className="font-semibold">{bill.vendorName}</p></div>
+                <div><p className="text-[11px] uppercase font-bold text-slate-500">Vendor Ref</p><p className="font-medium text-slate-700">{bill.reference || '—'}</p></div>
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Bill Date</p><p>{bill.billDate}</p></div>
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Due Date</p><p>{bill.dueDate}</p></div>
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Status</p><p className="font-bold">{bill.status}</p></div>
@@ -90,7 +91,11 @@ export const VendorBills = () => {
                 <div><p className="text-[11px] uppercase font-bold text-slate-500">Amount Due</p><p className="font-bold text-red-600">{inr(due)}</p></div>
               </div>
               <div className="flex flex-wrap gap-2 pt-1">
-                {bill.status === 'DRAFT' && <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Posting…' : 'Confirm (posts Dr Purchase / Cr Creditors)'}</button>}
+                {(bill.status === 'DRAFT' || bill.status === 'SUBMITTED') && (
+                  <button onClick={doConfirm} disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">
+                    {busy ? 'Posting…' : bill.status === 'SUBMITTED' ? 'Approve & Post Bill (Dr Purchase / Cr Creditors)' : 'Confirm (posts Dr Purchase / Cr Creditors)'}
+                  </button>
+                )}
                 {bill.status === 'CONFIRMED' && <button onClick={() => setPayOpen(true)} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Pay</button>}
                 {bill.status === 'PAID' && <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold">PAID in full</span>}
               </div>

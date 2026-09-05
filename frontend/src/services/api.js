@@ -93,6 +93,7 @@ export const purchasesAPI = {
   create: (payload) => api.post('/purchases', payload),
   confirm: (id) => api.post(`/purchases/${id}/confirm`),
   createBill: (id) => api.post(`/purchases/${id}/create-bill`),
+  vendorSubmitBill: (id, payload) => api.post(`/purchases/${id}/vendor-submit-bill`, payload),
 };
 
 export const billsAPI = {
