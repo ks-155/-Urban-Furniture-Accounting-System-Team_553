@@ -1,246 +1,360 @@
 # Urban Furniture — Architecture Decision Record
 
-> Fill this document together in Phase 0 before writing any code.
+## 1. System Overview & Tech Stack
+
+| Layer | Technology | Owner |
+|---|---|---|
+| **Frontend** | React.js + Tailwind CSS | Member 2 |
+| **Backend API** | Node.js + Express.js | Member 1 (You) |
+| **Database & ORM** | PostgreSQL + Prisma ORM | Member 1 (You) |
+| **API Architecture** | RESTful JSON API | Shared Contract (`CONTRACT.md`) |
 
 ---
 
-## 1. Module Info
+## 2. Project Directory Structure
 
-| Key | Value |
-|-----|-------|
-| Module Name | `urban_furniture` |
-| Odoo Version | *(fill in)* |
-| Approach | *(Custom models / Extend native modules)* |
-| Database | PostgreSQL (Odoo default) |
-
----
-
-## 2. Team Ownership
-
-| Owner | Responsible For |
-|-------|----------------|
-| Member 1 | All Python models, business logic, accounting rules, security, sequences |
-| Member 2 | All XML views, menus, QWeb reports, dashboard, UI polish, demo |
-
----
-
-## 3. Fixed Model Names
-
-| Model | Python Class | DB Table |
-|-------|-------------|----------|
-| Contact | `uf.contact` | `uf_contact` |
-| Product | `uf.product` | `uf_product` |
-| Chart of Accounts | `uf.chart.of.accounts` | `uf_chart_of_accounts` |
-| Journal | `uf.journal` | `uf_journal` |
-| Journal Entry | `uf.journal.entry` | `uf_journal_entry` |
-| Journal Entry Line | `uf.journal.entry.line` | `uf_journal_entry_line` |
-| Sales Order | `uf.sales.order` | `uf_sales_order` |
-| Sales Order Line | `uf.sales.order.line` | `uf_sales_order_line` |
-| Purchase Order | `uf.purchase.order` | `uf_purchase_order` |
-| Purchase Order Line | `uf.purchase.order.line` | `uf_purchase_order_line` |
-| Invoice | `uf.invoice` | `uf_invoice` |
-| Bill | `uf.bill` | `uf_bill` |
-| Payment | `uf.payment` | `uf_payment` |
-| Analytic Account | `uf.analytic.account` | `uf_analytic_account` |
-| Budget | `uf.budget` | `uf_budget` |
-
----
-
-## 4. Fixed Field Names (Do Not Change After Agreement)
-
-### uf.contact
 ```
-name, type (customer/vendor/both), email, mobile,
-city, state, pincode, profile_image
-```
-
-### uf.product
-```
-name, type (goods/service/combo), sales_price, cost_price, category
-```
-
-### uf.chart.of.accounts
-```
-name, account_type (asset/liability/expense/income/capital)
-```
-
-### uf.journal
-```
-name, journal_type (sales/purchase/bank/cash),
-default_debit_account_id, default_credit_account_id
-```
-
-### uf.sales.order
-```
-name (sequence), customer_id, order_date, state, total_amount
-line_ids (One2many → uf.sales.order.line)
-invoice_id (Many2one → uf.invoice)
-```
-
-### uf.sales.order.line
-```
-order_id, product_id, quantity, unit_price, tax_percent, subtotal
-```
-
-### uf.purchase.order
-```
-name (sequence), vendor_id, order_date, state, total_amount
-line_ids (One2many → uf.purchase.order.line)
-bill_id (Many2one → uf.bill)
-```
-
-### uf.purchase.order.line
-```
-order_id, product_id, quantity, unit_price, subtotal
-```
-
-### uf.invoice
-```
-name (sequence), customer_id, sales_order_id,
-invoice_date, due_date, state, total_amount, amount_paid, amount_due
-```
-
-### uf.bill
-```
-name (sequence), vendor_id, purchase_order_id,
-bill_date, due_date, state, total_amount, amount_paid, amount_due
-```
-
-### uf.payment
-```
-payment_type (inbound/outbound), contact_id,
-invoice_id, bill_id, journal_id, amount, payment_date,
-payment_method (cash/bank)
-```
-
-### uf.journal.entry
-```
-journal_id, entry_date, reference, state (draft/posted/cancelled)
-line_ids (One2many → uf.journal.entry.line)
-```
-
-### uf.journal.entry.line
-```
-entry_id, account_id, contact_id, debit, credit
-```
-
-### uf.budget
-```
-name, analytic_account_id, period_start, period_end,
-planned_amount, committed_amount, achieved_amount,
-achieved_percent (computed), amount_to_achieve (computed),
-responsible_id, state (draft/confirmed/revised/cancelled)
+urban-furniture/
+├── backend/                  # Owned by Member 1
+│   ├── prisma/
+│   │   ├── schema.prisma     # Database schema & relations
+│   │   └── seed.js           # Default CoA, Journals, Admin User
+│   ├── src/
+│   │   ├── controllers/      # Route logic (auth, contacts, sales, purchases, etc.)
+│   │   ├── routes/           # Express router endpoints
+│   │   ├── services/         # Accounting engine, validation, report calculations
+│   │   ├── middlewares/      # Auth & role verification, error handlers
+│   │   └── app.js            # Express app entrypoint
+│   ├── .env.example
+│   └── package.json
+│
+├── frontend/                 # Owned by Member 2
+│   ├── src/
+│   │   ├── components/       # UI Cards, Modals, Navbar, Sidebar
+│   │   ├── pages/            # Dashboard, Sales, Purchases, CoA, Reports, Login
+│   │   ├── services/api.js   # Fetch/Axios calls matching CONTRACT.md
+│   │   └── App.jsx
+│   └── package.json
+│
+├── docs/                     # Project specs & blueprints
+│   ├── ARCHITECTURE.md
+│   ├── CONTRACT.md
+│   ├── implementation_plan.md
+│   └── task.md
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## 5. Fixed Workflow States
+## 3. Database Schema (Prisma Models)
 
-| Model | States |
-|-------|--------|
-| Sales Order | `draft` → `confirmed` → `invoiced` |
-| Purchase Order | `draft` → `confirmed` → `billed` |
-| Invoice | `draft` → `confirmed` → `paid` |
-| Bill | `draft` → `confirmed` → `paid` |
-| Journal Entry | `draft` → `posted` → `cancelled` |
-| Budget | `draft` → `confirmed` → `revised` → `cancelled` |
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  ACCOUNTANT
+  USER
+}
+
+enum ContactType {
+  CUSTOMER
+  VENDOR
+  BOTH
+}
+
+enum ProductType {
+  GOODS
+  SERVICE
+  COMBO
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+enum JournalType {
+  SALES
+  PURCHASE
+  BANK
+  CASH
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  INVOICED
+  BILLED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  CONFIRMED
+  PAID
+  CANCELLED
+}
+
+enum EntryStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum BudgetStatus {
+  DRAFT
+  CONFIRMED
+  REVISED
+  CANCELLED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  loginId   String   @unique
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  contactId Int?     @unique
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Contact {
+  id        Int         @id @default(autoincrement())
+  name      String
+  type      ContactType @default(CUSTOMER)
+  email     String      @unique
+  mobile    String?
+  city      String?
+  state     String?
+  pincode   String?
+  image     String?
+  user      User?
+  sales     SalesOrder[]
+  purchases PurchaseOrder[]
+  invoices  Invoice[]
+  bills     Bill[]
+  payments  Payment[]
+  createdAt DateTime    @default(now())
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String
+  type       ProductType @default(GOODS)
+  salesPrice Float
+  costPrice  Float
+  category   String?
+  createdAt  DateTime    @default(now())
+  soLines    SalesOrderLine[]
+  poLines    PurchaseOrderLine[]
+}
+
+model ChartOfAccount {
+  id           Int         @id @default(autoincrement())
+  code         String      @unique
+  name         String
+  accountType  AccountType
+  journalLines JournalEntryLine[]
+  debitJournals  Journal[] @relation("DefaultDebit")
+  creditJournals Journal[] @relation("DefaultCredit")
+}
+
+model Journal {
+  id                    Int          @id @default(autoincrement())
+  name                  String
+  type                  JournalType
+  defaultDebitAccountId  Int?
+  defaultCreditAccountId Int?
+  defaultDebitAccount   ChartOfAccount? @relation("DefaultDebit", fields: [defaultDebitAccountId], references: [id])
+  defaultCreditAccount  ChartOfAccount? @relation("DefaultCredit", fields: [defaultCreditAccountId], references: [id])
+  entries               JournalEntry[]
+  payments              Payment[]
+}
+
+model SalesOrder {
+  id          Int              @id @default(autoincrement())
+  orderNumber String           @unique // SO0001
+  customerId  Int
+  customer    Contact          @relation(fields: [customerId], references: [id])
+  orderDate   DateTime         @default(now())
+  status      OrderStatus      @default(DRAFT)
+  totalAmount Float            @default(0.0)
+  lines       SalesOrderLine[]
+  invoice     Invoice?
+  createdAt   DateTime         @default(now())
+}
+
+model SalesOrderLine {
+  id         Int        @id @default(autoincrement())
+  orderId    Int
+  order      SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product    @relation(fields: [productId], references: [id])
+  quantity   Float      @default(1.0)
+  unitPrice  Float
+  taxPercent Float      @default(18.0)
+  subtotal   Float
+}
+
+model PurchaseOrder {
+  id          Int                 @id @default(autoincrement())
+  orderNumber String              @unique // PO0001
+  vendorId    Int
+  vendor      Contact             @relation(fields: [vendorId], references: [id])
+  orderDate   DateTime            @default(now())
+  status      OrderStatus         @default(DRAFT)
+  totalAmount Float               @default(0.0)
+  lines       PurchaseOrderLine[]
+  bill        Bill?
+  createdAt   DateTime            @default(now())
+}
+
+model PurchaseOrderLine {
+  id        Int           @id @default(autoincrement())
+  orderId   Int
+  order     PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product       @relation(fields: [productId], references: [id])
+  quantity  Float         @default(1.0)
+  unitPrice Float
+  subtotal  Float
+}
+
+model Invoice {
+  id             Int           @id @default(autoincrement())
+  invoiceNumber  String        @unique // INV0001
+  customerId     Int
+  customer       Contact       @relation(fields: [customerId], references: [id])
+  salesOrderId   Int?          @unique
+  salesOrder     SalesOrder?   @relation(fields: [salesOrderId], references: [id])
+  invoiceDate    DateTime      @default(now())
+  dueDate        DateTime?
+  status         InvoiceStatus @default(DRAFT)
+  totalAmount    Float
+  amountPaid     Float         @default(0.0)
+  amountDue      Float
+  journalEntryId Int?          @unique
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  payments       Payment[]
+  createdAt      DateTime      @default(now())
+}
+
+model Bill {
+  id              Int           @id @default(autoincrement())
+  billNumber      String        @unique // BILL0001
+  vendorId        Int
+  vendor          Contact       @relation(fields: [vendorId], references: [id])
+  purchaseOrderId Int?          @unique
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  billDate        DateTime      @default(now())
+  dueDate         DateTime?
+  status          InvoiceStatus @default(DRAFT)
+  totalAmount     Float
+  amountPaid      Float         @default(0.0)
+  amountDue       Float
+  journalEntryId  Int?          @unique
+  journalEntry    JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  payments        Payment[]
+  createdAt       DateTime      @default(now())
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  paymentNumber String        @unique // PAY0001
+  paymentType   String        // "INBOUND" (Sale) or "OUTBOUND" (Purchase)
+  contactId     Int
+  contact       Contact       @relation(fields: [contactId], references: [id])
+  invoiceId     Int?
+  invoice       Invoice?      @relation(fields: [invoiceId], references: [id])
+  billId        Int?
+  bill          Bill?         @relation(fields: [billId], references: [id])
+  journalId     Int
+  journal       Journal       @relation(fields: [journalId], references: [id])
+  amount        Float
+  paymentDate   DateTime      @default(now())
+  paymentMethod String        // "CASH" | "BANK"
+  journalEntryId Int?         @unique
+  journalEntry  JournalEntry? @relation(fields: [journalEntryId], references: [id])
+}
+
+model JournalEntry {
+  id          Int                @id @default(autoincrement())
+  entryNumber String             @unique // JE0001
+  journalId   Int
+  journal     Journal            @relation(fields: [journalId], references: [id])
+  entryDate   DateTime           @default(now())
+  reference   String?
+  status      EntryStatus        @default(DRAFT)
+  lines       JournalEntryLine[]
+  invoice     Invoice?
+  bill        Bill?
+  payment     Payment?
+  createdAt   DateTime           @default(now())
+}
+
+model JournalEntryLine {
+  id          Int            @id @default(autoincrement())
+  entryId     Int
+  entry       JournalEntry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountId   Int
+  account     ChartOfAccount @relation(fields: [accountId], references: [id])
+  label       String?
+  debit       Float          @default(0.0)
+  credit      Float          @default(0.0)
+}
+
+model AnalyticAccount {
+  id      Int      @id @default(autoincrement())
+  name    String
+  type    String   // "INCOME" | "EXPENSE"
+  budgets Budget[]
+}
+
+model Budget {
+  id                Int             @id @default(autoincrement())
+  name              String
+  analyticAccountId Int
+  analyticAccount   AnalyticAccount @relation(fields: [analyticAccountId], references: [id])
+  periodStart       DateTime
+  periodEnd         DateTime
+  plannedAmount     Float
+  committedAmount   Float
+  achievedAmount    Float           @default(0.0)
+  responsiblePerson String
+  status            BudgetStatus    @default(DRAFT)
+  createdAt         DateTime        @default(now())
+}
+```
 
 ---
 
-## 6. Sequences
+## 4. Double-Entry Rules Enforced in Node.js Services
 
-| Prefix | Example | Model |
-|--------|---------|-------|
-| `SO` | SO0001 | Sales Order |
-| `PO` | PO0001 | Purchase Order |
-| `INV` | INV0001 | Invoice |
-| `BILL` | BILL0001 | Bill |
-| `JE` | JE0001 | Journal Entry |
+1. **Credit Sale (Invoice Confirmed)**:
+   - Debit: `Debtors` (Asset)
+   - Credit: `Sales Income` (Income)
+2. **Payment Received for Invoice**:
+   - Debit: `Cash` or `Bank` (Asset)
+   - Credit: `Debtors` (Asset)
+3. **Credit Purchase (Bill Confirmed)**:
+   - Debit: `Purchase Expense` (Expense)
+   - Credit: `Creditors` (Liability)
+4. **Payment Sent for Bill**:
+   - Debit: `Creditors` (Liability)
+   - Credit: `Cash` or `Bank` (Asset)
 
----
-
-## 7. Security Groups
-
-| Group | XML ID | Access |
-|-------|--------|--------|
-| Administrator | `uf_admin` | Full CRUD on all models |
-| Accountant | `uf_accountant` | Full CRUD on master + transactions + reports |
-| Portal User | `uf_portal_user` | Read own invoices/bills only + register payment |
-
----
-
-## 8. Method Contracts (Member 1 exposes → Member 2 calls from buttons)
-
-| Method | Model | Triggered By | Does |
-|--------|-------|-------------|------|
-| `action_confirm()` | `uf.sales.order` | Confirm button | Sets state = confirmed |
-| `action_create_invoice()` | `uf.sales.order` | Create Invoice button | Creates `uf.invoice` record from SO |
-| `action_confirm()` | `uf.invoice` | Confirm button | Sets state = confirmed, creates JE |
-| `action_register_payment()` | `uf.invoice` | Register Payment button | Creates `uf.payment` + JE |
-| `action_confirm()` | `uf.purchase.order` | Confirm button | Sets state = confirmed |
-| `action_create_bill()` | `uf.purchase.order` | Create Bill button | Creates `uf.bill` record from PO |
-| `action_confirm()` | `uf.bill` | Confirm button | Sets state = confirmed, creates JE |
-| `action_register_payment()` | `uf.bill` | Register Payment button | Creates `uf.payment` + JE |
-| `action_post()` | `uf.journal.entry` | Post button | Validates Debit=Credit, sets state=posted |
-| `action_reset_draft()` | `uf.journal.entry` | Reset button | Sets state=draft |
-| `action_cancel()` | `uf.journal.entry` | Cancel button | Sets state=cancelled |
-| `action_confirm()` | `uf.budget` | Confirm button | Sets state=confirmed |
-| `action_revise()` | `uf.budget` | Revise button | Sets state=revised |
-
----
-
-## 9. Accounting Rules (Member 1 implements — both must understand)
-
-| Transaction | Debit | Credit |
-|-------------|-------|--------|
-| Sale on Credit (Invoice Confirm) | Debtor A/C | Sales Income A/C |
-| Cash/Bank Received from Customer | Cash/Bank A/C | Debtor A/C |
-| Purchase on Credit (Bill Confirm) | Purchase Expense A/C | Creditor A/C |
-| Cash/Bank Paid to Vendor | Creditor A/C | Cash/Bank A/C |
-
-**Golden Rule: Debit must ALWAYS equal Credit. No exceptions.**
-
----
-
-## 10. Default Chart of Accounts (Seeded Data)
-
-| Account Name | Type |
-|-------------|------|
-| Cash | Asset |
-| Bank | Asset |
-| Debtors | Asset |
-| Creditors | Liability |
-| Sales Income | Income |
-| Purchase Expense | Expense |
-
----
-
-## 11. Default Journals (Seeded Data)
-
-| Journal | Type | Default Debit A/C | Default Credit A/C |
-|---------|------|------------------|-------------------|
-| Sales Journal | sales | Debtors | Sales Income |
-| Purchase Journal | purchase | Purchase Expense | Creditors |
-| Bank Journal | bank | Bank | Bank |
-| Cash Journal | cash | Cash | Cash |
-
----
-
-## 12. Integration Points (Member 2 connects here)
-
-- **Menu action** → opens list/form view of the correct model
-- **Confirm button** → calls `action_confirm()` on current record
-- **Create Invoice button** → calls `action_create_invoice()` → opens new invoice form
-- **Register Payment button** → opens payment wizard → calls `action_register_payment()`
-- **Post button** (Journal Entry) → calls `action_post()` → checks balance
-- **Report page** → reads computed data from report calculation methods
-
----
-
-## Open Decisions *(Fill Before Coding)*
-
-- [ ] Odoo version confirmed: __________
-- [ ] Custom or extend native: __________
-- [ ] Tax: Fixed 18% or configurable: __________
-- [ ] Hackathon total hours: __________
-- [ ] Deployment: Local or cloud: __________
+**Golden Law:** `sum(line.debit) === sum(line.credit)` for every posted entry.

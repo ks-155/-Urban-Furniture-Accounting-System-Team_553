@@ -1,218 +1,383 @@
-# Urban Furniture — Integration Contract (CONTRACT.md)
+# Urban Furniture — API Contract (CONTRACT.md)
 
-> **Contract between Member 1 (Backend / Accounting) and Member 2 (UI / Integration)**
-> This document guarantees that backend and frontend will integrate seamlessly without breaking.
-
----
-
-## 1. Model & Data Contracts
-
-### 1.1 Contact (`uf.contact`)
-| Field | Type | Required | Values / Notes | Member 1 Provides | Member 2 Displays |
-|---|---|---|---|---|---|
-| `name` | Char | Yes | Contact full name | Stored in DB | Text input |
-| `type` | Selection | Yes | `'customer'`, `'vendor'`, `'both'` | Filter/domain rules | Radio / dropdown |
-| `email` | Char | Yes | Must be valid & unique | Validation | Text input |
-| `mobile` | Char | No | Phone number | Stored in DB | Text input |
-| `city` | Char | No | City | Stored in DB | Text input |
-| `state` | Char | No | State | Stored in DB | Text input |
-| `pincode` | Char | No | PIN / Postal code | Stored in DB | Text input |
-| `image_1920` | Binary | No | Image attachment | Stored in DB | Image widget |
-| `user_id` | Many2one | No | `res.users` link for Portal login | User link | Only for Portal User |
+> **Contract between Member 1 (Node.js/Express Backend) and Member 2 (React.js Frontend)**
+> Base URL: `http://localhost:5000/api`
 
 ---
 
-### 1.2 Product (`uf.product`)
-| Field | Type | Required | Values / Notes | Member 1 Provides | Member 2 Displays |
-|---|---|---|---|---|---|
-| `name` | Char | Yes | Product name | Stored in DB | Text input |
-| `type` | Selection | Yes | `'goods'`, `'service'`, `'combo'` | Classification | Dropdown |
-| `sales_price` | Float | Yes | Default selling price | Auto-loads into SO line | Monetary input |
-| `cost_price` | Float | Yes | Purchase/cost price | Auto-loads into PO line | Monetary input |
-| `category` | Char | No | Category (e.g. Chair, Table) | Stored in DB | Text input / dropdown |
+## 1. Authentication (`/api/auth`)
 
----
-
-### 1.3 Chart of Accounts (`uf.chart.of.accounts`)
-| Field | Type | Required | Values / Notes |
-|---|---|---|---|
-| `name` | Char | Yes | e.g. "Cash", "Bank", "Debtors", "Creditors", "Sales Income", "Purchase Expense" |
-| `code` | Char | Yes | Unique account code (e.g. `1001`, `2001`, `3001`, `4001`, `5001`) |
-| `account_type` | Selection | Yes | `'asset'`, `'liability'`, `'equity'`, `'income'`, `'expense'` |
-
----
-
-### 1.4 Journal (`uf.journal`)
-| Field | Type | Required | Values / Notes |
-|---|---|---|---|
-| `name` | Char | Yes | e.g. "Customer Invoices", "Vendor Bills", "Bank", "Cash" |
-| `type` | Selection | Yes | `'sales'`, `'purchase'`, `'bank'`, `'cash'` |
-| `default_debit_account_id` | Many2one | No | Points to `uf.chart.of.accounts` |
-| `default_credit_account_id` | Many2one | No | Points to `uf.chart.of.accounts` |
-
----
-
-### 1.5 Sales Order (`uf.sales.order`) & Lines (`uf.sales.order.line`)
-#### Order Header:
-* `name`: Char (auto-sequence `SO0001`)
-* `customer_id`: Many2one (`uf.contact`, domain: `[('type', 'in', ['customer', 'both'])]`)
-* `order_date`: Date (default today)
-* `state`: Selection `[('draft', 'Draft'), ('confirmed', 'Confirmed'), ('invoiced', 'Invoiced'), ('cancelled', 'Cancelled')]`
-* `line_ids`: One2many (`uf.sales.order.line`)
-* `total_amount`: Float (computed sum of line subtotals + tax)
-* `invoice_id`: Many2one (`uf.invoice`, readonly)
-
-#### Order Line:
-* `product_id`: Many2one (`uf.product`)
-* `quantity`: Float (default 1.0)
-* `unit_price`: Float (auto-filled from `product_id.sales_price`)
-* `tax_percent`: Float (default 18.0)
-* `subtotal`: Float (computed: `quantity * unit_price * (1 + tax_percent / 100)`)
-
----
-
-### 1.6 Purchase Order (`uf.purchase.order`) & Lines (`uf.purchase.order.line`)
-#### Order Header:
-* `name`: Char (auto-sequence `PO0001`)
-* `vendor_id`: Many2one (`uf.contact`, domain: `[('type', 'in', ['vendor', 'both'])]`)
-* `order_date`: Date (default today)
-* `state`: Selection `[('draft', 'Draft'), ('confirmed', 'Confirmed'), ('billed', 'Billed'), ('cancelled', 'Cancelled')]`
-* `line_ids`: One2many (`uf.purchase.order.line`)
-* `total_amount`: Float (computed sum of line subtotals)
-* `bill_id`: Many2one (`uf.bill`, readonly)
-
-#### Order Line:
-* `product_id`: Many2one (`uf.product`)
-* `quantity`: Float (default 1.0)
-* `unit_price`: Float (auto-filled from `product_id.cost_price`)
-* `subtotal`: Float (computed: `quantity * unit_price`)
-
----
-
-### 1.7 Customer Invoice (`uf.invoice`)
-* `name`: Char (auto-sequence `INV0001`)
-* `customer_id`: Many2one (`uf.contact`)
-* `sales_order_id`: Many2one (`uf.sales.order`)
-* `invoice_date`: Date
-* `due_date`: Date
-* `state`: Selection `[('draft', 'Draft'), ('confirmed', 'Confirmed'), ('paid', 'Paid'), ('cancelled', 'Cancelled')]`
-* `total_amount`: Float
-* `amount_paid`: Float
-* `amount_due`: Float (computed: `total_amount - amount_paid`)
-* `payment_ids`: One2many (`uf.payment`)
-* `journal_entry_id`: Many2one (`uf.journal.entry`)
-
----
-
-### 1.8 Vendor Bill (`uf.bill`)
-* `name`: Char (auto-sequence `BILL0001`)
-* `vendor_id`: Many2one (`uf.contact`)
-* `purchase_order_id`: Many2one (`uf.purchase.order`)
-* `bill_date`: Date
-* `due_date`: Date
-* `state`: Selection `[('draft', 'Draft'), ('confirmed', 'Confirmed'), ('paid', 'Paid'), ('cancelled', 'Cancelled')]`
-* `total_amount`: Float
-* `amount_paid`: Float
-* `amount_due`: Float (computed: `total_amount - amount_paid`)
-* `payment_ids`: One2many (`uf.payment`)
-* `journal_entry_id`: Many2one (`uf.journal.entry`)
-
----
-
-### 1.9 Payment (`uf.payment`)
-* `name`: Char (auto-sequence `PAY0001`)
-* `payment_type`: Selection `[('inbound', 'Receive Money / Customer'), ('outbound', 'Send Money / Vendor')]`
-* `contact_id`: Many2one (`uf.contact`)
-* `invoice_id`: Many2one (`uf.invoice`, optional)
-* `bill_id`: Many2one (`uf.bill`, optional)
-* `journal_id`: Many2one (`uf.journal`, domain: `[('type', 'in', ['bank', 'cash'])]`)
-* `payment_method`: Selection `[('cash', 'Cash'), ('bank', 'Bank Transfer')]`
-* `amount`: Float
-* `payment_date`: Date (default today)
-* `journal_entry_id`: Many2one (`uf.journal.entry`)
-
----
-
-### 1.10 Journal Entry (`uf.journal.entry`) & Lines (`uf.journal.entry.line`)
-#### Header:
-* `name`: Char (auto-sequence `JE0001`)
-* `journal_id`: Many2one (`uf.journal`)
-* `entry_date`: Date
-* `reference`: Char (e.g. "INV0001 - Nimesh Pathak")
-* `state`: Selection `[('draft', 'Draft'), ('posted', 'Posted'), ('cancelled', 'Cancelled')]`
-* `line_ids`: One2many (`uf.journal.entry.line`)
-* `total_debit`: Float (computed sum of line debits)
-* `total_credit`: Float (computed sum of line credits)
-
-#### Line:
-* `account_id`: Many2one (`uf.chart.of.accounts`)
-* `contact_id`: Many2one (`uf.contact`, optional)
-* `name`: Char (description / label)
-* `debit`: Float
-* `credit`: Float
-
----
-
-### 1.11 Analytic Account (`uf.analytic.account`) & Budget (`uf.budget`)
-#### Analytic Account:
-* `name`: Char
-* `type`: Selection `[('income', 'Income'), ('expense', 'Expense')]`
-
-#### Budget:
-* `name`: Char
-* `analytic_account_id`: Many2one (`uf.analytic.account`)
-* `period_start`: Date
-* `period_end`: Date
-* `planned_amount`: Float
-* `committed_amount`: Float
-* `achieved_amount`: Float (computed/tracked from posted entries)
-* `achieved_percent`: Float (computed: `(achieved_amount / committed_amount) * 100` if committed > 0 else 0)
-* `amount_to_achieve`: Float (computed: `committed_amount - achieved_amount`)
-* `responsible_id`: Many2one (`res.users`)
-* `state`: Selection `[('draft', 'Draft'), ('confirmed', 'Confirmed'), ('revised', 'Revised'), ('cancelled', 'Cancelled')]`
-
----
-
-## 2. Button Action Methods Contract
-
-Member 2's XML view buttons call these exact method names on Member 1's models:
-
-| Model | Button String in UI | Method Name | Expected Result |
-|---|---|---|---|
-| `uf.sales.order` | "Confirm" | `action_confirm()` | Changes state to `confirmed` |
-| `uf.sales.order` | "Create Invoice" | `action_create_invoice()` | Creates `uf.invoice`, sets SO state to `invoiced`, returns invoice view action |
-| `uf.invoice` | "Confirm" | `action_confirm()` | Validates invoice, creates credit sale Journal Entry (`posted`) |
-| `uf.invoice` | "Register Payment" | `action_register_payment()` | Opens payment wizard or registers payment record |
-| `uf.purchase.order` | "Confirm" | `action_confirm()` | Changes state to `confirmed` |
-| `uf.purchase.order` | "Create Bill" | `action_create_bill()` | Creates `uf.bill`, sets PO state to `billed`, returns bill view action |
-| `uf.bill` | "Confirm" | `action_confirm()` | Validates bill, creates purchase expense Journal Entry (`posted`) |
-| `uf.bill` | "Register Payment" | `action_register_payment()` | Opens payment wizard or registers payment record |
-| `uf.payment` | "Post Payment" | `action_post()` | Updates Invoice/Bill `amount_paid` and `state`, creates Cash/Bank Journal Entry |
-| `uf.journal.entry` | "Post" | `action_post()` | Validates `total_debit == total_credit`, sets state to `posted` |
-| `uf.journal.entry` | "Reset to Draft" | `action_reset_draft()` | Sets state back to `draft` |
-| `uf.journal.entry` | "Cancel" | `action_cancel()` | Sets state to `cancelled` |
-| `uf.budget` | "Confirm" | `action_confirm()` | Sets state to `confirmed` |
-| `uf.budget` | "Revise" | `action_revise()` | Sets state to `revised` |
-
----
-
-## 3. Double-Entry Accounting Rule Mapping
-
+### 1.1 Sign In
+* **POST** `/auth/login`
+* **Request:**
+```json
+{
+  "loginId": "accountant01",
+  "password": "Password@123"
+}
 ```
-1. Customer Invoice Confirmation:
-   Debit:  Debtors Account (Asset)
-   Credit: Sales Income Account (Income)
-
-2. Customer Invoice Payment Received:
-   Debit:  Cash or Bank Account (Asset)
-   Credit: Debtors Account (Asset)
-
-3. Vendor Bill Confirmation:
-   Debit:  Purchase Expense Account (Expense)
-   Credit: Creditors Account (Liability)
-
-4. Vendor Bill Payment Made:
-   Debit:  Creditors Account (Liability)
-   Credit: Bank or Cash Account (Asset)
+* **Response (200 OK):**
+```json
+{
+  "token": "jwt_token_string",
+  "user": {
+    "id": 1,
+    "name": "Alex Accountant",
+    "loginId": "accountant01",
+    "email": "alex@urbanfurniture.com",
+    "role": "ACCOUNTANT",
+    "contactId": null
+  }
+}
 ```
-**Constraint:** In every posted entry, `sum(debit) == sum(credit)`. If unbalanced, raise `ValidationError`.
+* **Error (401 Unauthorized):**
+```json
+{ "error": "Invalid Login Id or Password" }
+```
+
+### 1.2 Sign Up (Portal User Only)
+* **POST** `/auth/signup`
+* **Request:**
+```json
+{
+  "name": "Nimesh Pathak",
+  "loginId": "nimeshp",
+  "email": "nimesh@gmail.com",
+  "password": "Password@123",
+  "confirmPassword": "Password@123"
+}
+```
+* **Validation Rules:**
+  - `loginId`: 6 to 12 characters, unique.
+  - `email`: valid email, unique.
+  - `password`: 8+ characters, must include lowercase, uppercase, and special character.
+* **Response (201 Created):**
+```json
+{
+  "message": "User created successfully",
+  "user": { "id": 2, "loginId": "nimeshp", "role": "USER" }
+}
+```
+
+---
+
+## 2. Master Data APIs
+
+### 2.1 Contacts (`/api/contacts`)
+* **GET** `/contacts` — list contacts (Query params: `?type=CUSTOMER` or `?type=VENDOR`)
+* **GET** `/contacts/:id` — get single contact details
+* **POST** `/contacts` — create contact:
+```json
+{
+  "name": "Azure Furniture",
+  "type": "VENDOR",
+  "email": "azure@furniture.com",
+  "mobile": "9876543210",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "pincode": "400001",
+  "image": "base64_string_or_url"
+}
+```
+* **PUT** `/contacts/:id` — update contact
+
+### 2.2 Products (`/api/products`)
+* **GET** `/products` — list all products
+* **POST** `/products` — create product:
+```json
+{
+  "name": "Office Chair",
+  "type": "GOODS",
+  "salesPrice": 2000.0,
+  "costPrice": 1500.0,
+  "category": "Office Furniture"
+}
+```
+
+### 2.3 Chart of Accounts (`/api/accounts`)
+* **GET** `/accounts` — list all accounts (Cash, Bank, Debtors, Creditors, Sales Income, Purchase Expense)
+* **POST** `/accounts` — create account:
+```json
+{
+  "code": "1001",
+  "name": "Cash",
+  "accountType": "ASSET"
+}
+```
+
+### 2.4 Journals (`/api/journals`)
+* **GET** `/journals` — list all journals (Sales, Purchase, Bank, Cash)
+* **POST** `/journals` — create journal
+
+---
+
+## 3. Purchase Workflow (`/api/purchases`)
+
+### 3.1 Create Purchase Order
+* **POST** `/purchases`
+```json
+{
+  "vendorId": 1,
+  "lines": [
+    {
+      "productId": 2,
+      "quantity": 10,
+      "unitPrice": 1500.0
+    }
+  ]
+}
+```
+* **Response (201 Created):**
+```json
+{
+  "id": 1,
+  "orderNumber": "PO0001",
+  "vendorId": 1,
+  "status": "DRAFT",
+  "totalAmount": 15000.0,
+  "lines": [...]
+}
+```
+
+### 3.2 Confirm Purchase Order
+* **POST** `/purchases/:id/confirm`
+* **Response:** `{ "id": 1, "status": "CONFIRMED" }`
+
+### 3.3 Create Vendor Bill from PO
+* **POST** `/purchases/:id/create-bill`
+* **Response (201 Created):**
+```json
+{
+  "id": 1,
+  "billNumber": "BILL0001",
+  "purchaseOrderId": 1,
+  "vendorId": 1,
+  "status": "DRAFT",
+  "totalAmount": 15000.0,
+  "amountPaid": 0.0,
+  "amountDue": 15000.0
+}
+```
+
+### 3.4 Confirm Vendor Bill
+* **POST** `/bills/:id/confirm`
+* **Action:** Confirms Bill and **auto-creates double-entry Journal Entry**:
+  - Debit: `Purchase Expense` (₹15,000)
+  - Credit: `Creditors` (₹15,000)
+* **Response:** `{ "id": 1, "status": "CONFIRMED", "journalEntryId": 5 }`
+
+### 3.5 Register Payment for Bill
+* **POST** `/bills/:id/pay`
+```json
+{
+  "journalId": 3,
+  "paymentMethod": "BANK",
+  "amount": 15000.0
+}
+```
+* **Action:** Marks Bill as `PAID` and creates Journal Entry:
+  - Debit: `Creditors` (₹15,000)
+  - Credit: `Bank` (₹15,000)
+* **Response:** `{ "message": "Payment recorded", "billStatus": "PAID" }`
+
+---
+
+## 4. Sales Workflow (`/api/sales`)
+
+### 4.1 Create Sales Order
+* **POST** `/sales`
+```json
+{
+  "customerId": 2,
+  "lines": [
+    {
+      "productId": 1,
+      "quantity": 5,
+      "unitPrice": 2000.0,
+      "taxPercent": 18.0
+    }
+  ]
+}
+```
+* **Response (201 Created):**
+```json
+{
+  "id": 1,
+  "orderNumber": "SO0001",
+  "customerId": 2,
+  "status": "DRAFT",
+  "totalAmount": 11800.0
+}
+```
+
+### 4.2 Confirm Sales Order
+* **POST** `/sales/:id/confirm`
+
+### 4.3 Create Customer Invoice from SO
+* **POST** `/sales/:id/create-invoice`
+* **Response (201 Created):**
+```json
+{
+  "id": 1,
+  "invoiceNumber": "INV0001",
+  "customerId": 2,
+  "salesOrderId": 1,
+  "status": "DRAFT",
+  "totalAmount": 11800.0,
+  "amountDue": 11800.0
+}
+```
+
+### 4.4 Confirm Customer Invoice
+* **POST** `/invoices/:id/confirm`
+* **Action:** Confirms Invoice and creates Journal Entry:
+  - Debit: `Debtors` (₹11,800)
+  - Credit: `Sales Income` (₹11,800)
+
+### 4.5 Register Payment for Invoice
+* **POST** `/invoices/:id/pay`
+```json
+{
+  "journalId": 4,
+  "paymentMethod": "CASH",
+  "amount": 11800.0
+}
+```
+* **Action:** Marks Invoice as `PAID` and creates Journal Entry:
+  - Debit: `Cash` (₹11,800)
+  - Credit: `Debtors` (₹11,800)
+
+---
+
+## 5. Accounting Engine (`/api/journal-entries`)
+
+### 5.1 List Journal Entries
+* **GET** `/journal-entries`
+* Returns all entries with status, total debits, total credits, and line items.
+
+### 5.2 Manual Journal Entry Creation
+* **POST** `/journal-entries`
+```json
+{
+  "journalId": 1,
+  "entryDate": "2026-09-05",
+  "reference": "Adjustment",
+  "lines": [
+    { "accountId": 1, "label": "Cash in Hand", "debit": 5000, "credit": 0 },
+    { "accountId": 5, "label": "Sales Income", "debit": 0, "credit": 5000 }
+  ]
+}
+```
+* **Validation:** Backend strictly validates that `totalDebit === totalCredit`. If not equal, returns `400 Bad Request`:
+```json
+{ "error": "Journal Entry is unbalanced! Total Debit (5000) != Total Credit (4000)" }
+```
+
+---
+
+## 6. Budget & Analytics (`/api/budgets`)
+
+* **GET** `/budgets` — list budgets with computed `achievedPercent` and `amountToAchieve`
+* **POST** `/budgets` — create budget:
+```json
+{
+  "name": "Q3 Furniture Production",
+  "analyticAccountId": 1,
+  "periodStart": "2026-07-01",
+  "periodEnd": "2026-09-30",
+  "plannedAmount": 100000.0,
+  "committedAmount": 80000.0,
+  "responsiblePerson": "Nimesh Pathak"
+}
+```
+* **POST** `/budgets/:id/confirm`
+* **POST** `/budgets/:id/revise`
+
+---
+
+## 7. Reports (`/api/reports`)
+
+### 7.1 Balance Sheet
+* **GET** `/reports/balance-sheet`
+```json
+{
+  "assets": [
+    { "account": "Cash", "balance": 11800 },
+    { "account": "Bank", "balance": -15000 },
+    { "account": "Debtors", "balance": 0 }
+  ],
+  "totalAssets": -3200,
+  "liabilities": [
+    { "account": "Creditors", "balance": 0 }
+  ],
+  "totalLiabilities": 0,
+  "equity": 0,
+  "isBalanced": true
+}
+```
+
+### 7.2 Profit & Loss (P&L)
+* **GET** `/reports/profit-loss`
+```json
+{
+  "income": [
+    { "account": "Sales Income", "amount": 11800 }
+  ],
+  "totalIncome": 11800,
+  "expenses": [
+    { "account": "Purchase Expense", "amount": 15000 }
+  ],
+  "totalExpenses": 15000,
+  "netProfit": -3200
+}
+```
+
+### 7.3 Budget Report
+* **GET** `/reports/budget`
+```json
+[
+  {
+    "budgetName": "Q3 Furniture Production",
+    "analyticAccount": "Production",
+    "planned": 100000,
+    "committed": 80000,
+    "achieved": 15000,
+    "achievedPercent": 18.75,
+    "amountToAchieve": 65000,
+    "status": "CONFIRMED"
+  }
+]
+```
+
+---
+
+## 8. Dashboard Data (`/api/dashboard`)
+
+* **GET** `/dashboard`
+* Matches the exact layout cards from the Excalidraw mockup:
+```json
+{
+  "sales": {
+    "all": 12,
+    "confirmed": 10,
+    "draft": 2,
+    "totalRevenue": 150000
+  },
+  "purchase": {
+    "all": 12,
+    "confirmed": 10,
+    "draft": 2,
+    "totalExpense": 110000
+  },
+  "budget": {
+    "achieved": 3,
+    "budget": 2,
+    "committed": 4
+  },
+  "financials": {
+    "netProfit": 40000,
+    "totalReceivables": 25000,
+    "totalPayables": 18000
+  }
+}
+```
