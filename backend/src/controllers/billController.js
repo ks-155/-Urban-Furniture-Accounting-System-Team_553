@@ -281,7 +281,7 @@ async function payBill(req, res) {
     const remainingDue = parseFloat(bill.totalAmount) - parseFloat(bill.paidAmount);
     if (payAmount > remainingDue + 0.01) {
       return res.status(400).json({
-        error: `Payment amount (₹${payAmount}) exceeds remaining due amount (₹${remainingDue}).`,
+        error: `Payment amount (${payAmount}) exceeds remaining due amount (${remainingDue}).`,
       });
     }
 

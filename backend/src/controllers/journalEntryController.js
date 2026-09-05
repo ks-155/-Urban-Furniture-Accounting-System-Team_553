@@ -85,7 +85,7 @@ async function createManualEntry(req, res) {
     // STRICT EXCALIDRAW RULE: Blocking error if debits and credits do not match
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       return res.status(400).json({
-        error: `Journal Entry is unbalanced! Total Debit (₹${totalDebit.toFixed(2)}) does not match Total Credit (₹${totalCredit.toFixed(2)}). Every entry must satisfy Double-Entry principle.`,
+        error: `Journal Entry is unbalanced! Total Debit (${totalDebit.toFixed(2)}) does not match Total Credit (${totalCredit.toFixed(2)}). Every entry must satisfy Double-Entry principle.`,
       });
     }
 

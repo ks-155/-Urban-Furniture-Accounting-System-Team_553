@@ -268,7 +268,7 @@ async function confirmInvoice(req, res) {
     const totalCredit = items.reduce((s, it) => s + it.credit, 0);
     if (Math.abs(totalDebit - totalCredit) > 0.01) {
       return res.status(400).json({
-        error: `Journal Entry unbalanced: Debit ₹${totalDebit} != Credit ₹${totalCredit}`,
+        error: `Journal Entry unbalanced: Debit ${totalDebit} != Credit ${totalCredit}`,
       });
     }
 
@@ -354,7 +354,7 @@ async function payInvoice(req, res) {
     const remainingDue = parseFloat(invoice.totalAmount) - parseFloat(invoice.paidAmount);
     if (payAmount > remainingDue + 0.01) {
       return res.status(400).json({
-        error: `Payment amount (₹${payAmount}) exceeds remaining due amount (₹${remainingDue}).`,
+        error: `Payment amount (${payAmount}) exceeds remaining due amount (${remainingDue}).`,
       });
     }
 
@@ -458,7 +458,7 @@ async function payInvoice(req, res) {
     });
 
     return res.status(200).json({
-      message: `Payment of ₹${payAmount} registered successfully`,
+      message: 'Payment recorded and ledger updated successfully',
       invoice: updatedInvoice,
       payment: paymentRecord,
       journalEntry: paymentJE,
