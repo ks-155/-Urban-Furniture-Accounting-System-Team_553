@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { accountsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { ArrowLeft, Plus, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 const emptyForm = { code: '', name: '', type: 'ASSET' };
@@ -19,7 +19,7 @@ export const ChartOfAccounts = () => {
   const [saving, setSaving] = useState(false);
 
   const fetcher = useCallback(() => accountsAPI.list(), []);
-  const { data: list, loading, error, live, refresh } = useLiveList(fetcher, 'accounts', mockAccounts);
+  const { data: list, loading, error, refresh } = useLiveList(fetcher, 'accounts', mockAccounts);
 
   const openNew = () => { setForm(emptyForm); setFormError(''); setView('form'); };
   const resetNew = () => { setForm(emptyForm); setFormError(''); };
@@ -80,39 +80,34 @@ export const ChartOfAccounts = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Chart of Accounts (List View)</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live balances from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
-          </p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
-      {loading && <p className="text-sm text-slate-500">Loading accounts…</p>}
+      {loading && <p className="text-sm text-slate-500 mb-3">Loading latest accounts…</p>}
       {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
-      {!loading && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="px-4 py-3">Code</th>
-                <th className="px-4 py-3">Account Name</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3 text-right">Balance</th>
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+              <th className="px-4 py-3">Code</th>
+              <th className="px-4 py-3">Account Name</th>
+              <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3 text-right">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((a) => (
+              <tr key={a.id || a.code} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
+                <td className="px-4 py-3 font-mono text-slate-600">{a.code}</td>
+                <td className="px-4 py-3 font-semibold text-slate-900">{a.name}</td>
+                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${typeColor(a.type)}`}>{a.type}</span></td>
+                <td className="px-4 py-3 text-right font-semibold text-slate-900">{a.balance !== undefined ? inr(a.balance) : '—'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {list.map((a) => (
-                <tr key={a.id || a.code} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60">
-                  <td className="px-4 py-3 font-mono text-slate-600">{a.code}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-900">{a.name}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${typeColor(a.type)}`}>{a.type}</span></td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">{a.balance !== undefined ? inr(a.balance) : '—'}</td>
-                </tr>
-              ))}
-              {list.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No accounts found.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+            {list.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">{loading ? 'Loading accounts…' : 'No accounts found.'}</td></tr>}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

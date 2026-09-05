@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { contactsAPI, getApiError } from '../services/api';
 import { useLiveList, phoneOf } from '../hooks/useLiveList';
-import { ArrowLeft, Plus, Search, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
+import { ViewModeButtons } from '../components/ViewModeButtons';
 
 const emptyForm = { name: '', type: 'CUSTOMER', email: '', phone: '', city: '', state: '', pincode: '' };
 
@@ -128,10 +129,7 @@ export const Contacts = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Contact List View</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
-          </p>
+          <h1 className="text-xl font-bold text-slate-900">Contact List</h1>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
@@ -146,10 +144,7 @@ export const Contacts = () => {
           <option value="VENDOR">Vendor</option>
           <option value="BOTH">Both</option>
         </select>
-        <div className="flex rounded-xl border border-slate-200 overflow-hidden text-sm font-semibold">
-          <button onClick={() => setListMode('list')} className={`px-3 py-2 ${listMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>List View</button>
-          <button onClick={() => setListMode('kanban')} className={`px-3 py-2 ${listMode === 'kanban' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Kanban View</button>
-        </div>
+        <ViewModeButtons value={listMode} onChange={setListMode} />
         <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">Back</button>
       </div>
       {loading && <p className="text-sm text-slate-500">Loading contacts…</p>}

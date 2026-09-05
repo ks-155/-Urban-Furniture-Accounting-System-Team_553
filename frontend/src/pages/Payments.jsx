@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
 import { paymentsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { Search, ArrowDownLeft, ArrowUpRight, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import { Search, ArrowDownLeft, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -25,7 +25,7 @@ export const Payments = () => {
     return paymentsAPI.list(params);
   }, [tab, search]);
 
-  const { data: rawList, loading, error, live } = useLiveList(fetcher, 'payments', mockPayments);
+  const { data: rawList, loading, error } = useLiveList(fetcher, 'payments', mockPayments);
 
   const list = (rawList || []).filter((p) => {
     if (tab === 'INBOUND') return p.paymentType === 'INBOUND';
@@ -66,13 +66,8 @@ export const Payments = () => {
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             {tab === 'INBOUND' ? 'Customer Receipts (Sales)' : tab === 'OUTBOUND' ? 'Vendor Payments (Purchase)' : 'Payments & Receipts Ledger'}
           </h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? (
-              <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend database</>
-            ) : (
-              <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline / Session data</>
-            )}
-            {' • '}Double-entry balanced via Bank & Cash Journals
+          <p className="text-xs text-slate-500 mt-1">
+            Double-entry balanced via Bank & Cash Journals
           </p>
         </div>
 

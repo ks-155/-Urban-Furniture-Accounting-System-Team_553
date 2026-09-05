@@ -126,7 +126,7 @@ export const Navbar = ({ onOpenCreateUser }) => {
                         onClick={() => setActiveDropdown(null)}
                         className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
                       >
-                        Receipts (Payments)
+                        Payment Receipts
                       </Link>
                     </div>
                   )}
@@ -174,10 +174,13 @@ export const Navbar = ({ onOpenCreateUser }) => {
                   )}
                 </div>
 
-                {/* 3. ACCOUNT (MASTER DATA & JOURNALS) */}
+                {/* 3. ACCOUNT */}
                 <div className="relative">
                   <button
+                    type="button"
                     onClick={() => toggleDropdown('account')}
+                    aria-haspopup="menu"
+                    aria-expanded={activeDropdown === 'account'}
                     className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                       activeDropdown === 'account'
                         ? 'bg-blue-50 text-blue-700'
@@ -190,10 +193,7 @@ export const Navbar = ({ onOpenCreateUser }) => {
                   </button>
 
                   {activeDropdown === 'account' && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                      <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                        Master Data
-                      </div>
+                    <div className="absolute left-0 top-full mt-2 w-64 max-h-[calc(100vh-5rem)] overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[60] animate-in fade-in slide-in-from-top-1 duration-150">
                       <Link
                         to="/contacts"
                         onClick={() => setActiveDropdown(null)}

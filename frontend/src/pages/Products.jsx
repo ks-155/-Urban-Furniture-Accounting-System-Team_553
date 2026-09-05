@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { productsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { ArrowLeft, Plus, Search, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
+import { ViewModeButtons } from '../components/ViewModeButtons';
 
 const emptyForm = { name: '', type: 'GOODS', category: '', salesPrice: '', costPrice: '' };
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
@@ -111,10 +112,7 @@ export const Products = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Product Master List View</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
-          </p>
+          <h1 className="text-xl font-bold text-slate-900">Product Master List</h1>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
@@ -129,10 +127,7 @@ export const Products = () => {
           <option value="SERVICE">Service</option>
           <option value="COMBO">Combo</option>
         </select>
-        <div className="flex rounded-xl border border-slate-200 overflow-hidden text-sm font-semibold">
-          <button onClick={() => setListMode('list')} className={`px-3 py-2 ${listMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>List View</button>
-          <button onClick={() => setListMode('kanban')} className={`px-3 py-2 ${listMode === 'kanban' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Kanban View</button>
-        </div>
+        <ViewModeButtons value={listMode} onChange={setListMode} />
       </div>
       {loading && <p className="text-sm text-slate-500">Loading products…</p>}
       {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}

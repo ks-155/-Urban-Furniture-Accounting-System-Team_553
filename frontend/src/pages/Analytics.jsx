@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { analyticsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { ArrowLeft, Plus, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 const emptyForm = { name: '', type: 'EXPENSE' };
 
@@ -12,7 +12,7 @@ export const Analytics = () => {
   const [saving, setSaving] = useState(false);
 
   const fetcher = useCallback(() => analyticsAPI.list(), []);
-  const { data: list, loading, error, live, refresh } = useLiveList(fetcher, 'analyticAccounts', []);
+  const { data: list, loading, error, refresh } = useLiveList(fetcher, 'analyticAccounts', []);
 
   const openNew = () => { setForm(emptyForm); setFormError(''); setView('form'); };
   const resetNew = () => { setForm(emptyForm); setFormError(''); };
@@ -65,9 +65,6 @@ export const Analytics = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Analyticals (List View)</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline — backend required</>}
-          </p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>

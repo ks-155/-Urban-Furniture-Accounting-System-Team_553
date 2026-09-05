@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { reportsAPI } from '../services/api';
-import { ArrowLeft, Printer, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 
 const inr = (n) => `\u20B9${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -27,17 +27,10 @@ const nets = (entries) => {
   return m;
 };
 
-const LiveBadge = ({ live }) => (
-  <span className="text-xs text-slate-500 flex items-center gap-1.5">
-    {live ? (<><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</>) : (<><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline compute</>)}
-  </span>
-);
-
 const FilterBar = ({ title, live, years, year, setYear, yearOptions }) => (
   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
     <div>
       <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-      <div className="mt-1"><LiveBadge live={live} />{live && !yearOptions && <span className="text-xs text-slate-400"> - all-time ledger (no date filter server-side)</span>}</div>
     </div>
     <div className="flex items-center gap-2 no-print">
       {(yearOptions || (!live && years)) && (
@@ -210,7 +203,6 @@ export const BudgetReport = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div>
             <h1 className="text-xl font-bold text-slate-900">Budget Report - Planned vs Actual</h1>
-            <div className="mt-1"><LiveBadge live /></div>
           </div>
           <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
         </div>
@@ -251,7 +243,6 @@ export const BudgetReport = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Budget Report - Planned vs Actual</h1>
-          <div className="mt-1"><LiveBadge live={false} /></div>
         </div>
         <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
       </div>

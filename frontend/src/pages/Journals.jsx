@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { journalsAPI, accountsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { ArrowLeft, Plus, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 const emptyForm = { name: '', code: '', type: 'SALES', defaultAccountId: '' };
 
@@ -14,7 +14,7 @@ export const Journals = () => {
   const [saving, setSaving] = useState(false);
 
   const fetcher = useCallback(() => journalsAPI.list(), []);
-  const { data: list, loading, error, live, refresh } = useLiveList(fetcher, 'journals', mockJournals);
+  const { data: list, loading, error, refresh } = useLiveList(fetcher, 'journals', mockJournals);
 
   const accountsFetcher = useCallback(() => accountsAPI.list(), []);
   const { data: accounts } = useLiveList(accountsFetcher, 'accounts', mockAccounts);
@@ -81,9 +81,6 @@ export const Journals = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Journals (List View)</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
-          </p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>

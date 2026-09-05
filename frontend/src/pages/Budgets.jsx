@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { budgetsAPI, analyticsAPI } from '../services/api';
-import { ArrowLeft, Plus, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 const inr = (n) => `\u20B9${Number(n || 0).toLocaleString('en-IN')}`;
 const pct = (a, c) => (!c ? '0%' : `${((Number(a || 0) / Number(c)) * 100).toFixed(1)}%`);
@@ -169,9 +169,6 @@ export const Budgets = () => {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="text-xl font-bold text-slate-900">Budget (Form View) - {selected.status}</h1>
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-              {live ? (<><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live DB</>) : (<><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline</>)}
-            </p>
           </div>
           <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
         </div>
@@ -251,9 +248,6 @@ export const Budgets = () => {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Budget Report (List View)</h1>
-          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-            {live ? (<><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live DB</>) : (<><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline</>)}
-          </p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
       </div>
