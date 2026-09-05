@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
+import { contactsAPI, productsAPI } from '../services/api';
+import { useLiveList, phoneOf } from '../hooks/useLiveList';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { phoneOf } from '../hooks/useLiveList';
 
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const PurchaseOrders = () => {
-  const { purchaseOrders, contacts, products, createPurchaseOrder, confirmPurchaseOrder, createBillFromPO, vendorBills } = useAccounting();
+  const { purchaseOrders, contacts: mockContacts, products: mockProducts, createPurchaseOrder, confirmPurchaseOrder, createBillFromPO, vendorBills } = useAccounting();
+  const contactsFetcher = useCallback(() => contactsAPI.list(), []);
+  const { data: liveContacts } = useLiveList(contactsFetcher, 'contacts', mockContacts);
+  const productsFetcher = useCallback(() => productsAPI.list(), []);
+  const { data: liveProducts } = useLiveList(productsFetcher, 'products', mockProducts);
+  const contacts = liveContacts.length ? liveContacts : mockContacts;
+  const products = liveProducts.length ? liveProducts : mockProducts;
   const [view, setView] = useState('list'); // list | form | detail
   const [selected, setSelected] = useState(null);
   const [vendorId, setVendorId] = useState('');
   const [poDate, setPoDate] = useState(new Date().toISOString().split('T')[0]);
   const [lines, setLines] = useState([{ productId: '', analytic: '', quantity: 1, unitPrice: '' }]);
   const [formError, setFormError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const vendors = contacts.filter((c) => c.type === 'VENDOR' || c.type === 'BOTH');
   const billForPO = (poId) => vendorBills.find((b) => b.purchaseOrderId === poId);
@@ -37,14 +46,31 @@ export const PurchaseOrders = () => {
   const lineTotal = (l) => Number(l.quantity || 0) * Number(l.unitPrice || 0);
   const formTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setFormError('');
     if (!vendorId) { setFormError('Select a vendor from Contact Master.'); return; }
     if (lines.some((l) => !l.productId || Number(l.quantity) <= 0)) { setFormError('Each row needs a product and quantity > 0.'); return; }
-    const po = createPurchaseOrder(vendorId, lines, { date: poDate });
-    setSelected(po);
-    setView('detail');
+    setBusy(true);
+    try {
+      const po = await createPurchaseOrder(vendorId, lines, { date: poDate });
+      setSelected(po);
+      setView('detail');
+    } catch (err) {
+      setFormError(err?.message || 'Failed to create purchase order.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doConfirmPO = async (id) => {
+    setActionError('');
+    try { await confirmPurchaseOrder(id); } catch (err) { setActionError(err?.message || 'Confirm failed.'); }
+  };
+  const doCreateBill = async (id) => {
+    setActionError('');
+    setBusy(true);
+    try { await createBillFromPO(id); } catch (err) { setActionError(err?.message || 'Create Bill failed.'); } finally { setBusy(false); }
   };
 
   const input = 'w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm';
@@ -99,7 +125,7 @@ export const PurchaseOrders = () => {
           <div className="flex justify-end text-sm"><span className="text-slate-500 mr-2">Total</span><b>{inr(formTotal)}</b></div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            <button type="submit" className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>
+            <button type="submit" disabled={busy} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -137,11 +163,12 @@ export const PurchaseOrders = () => {
             </tbody>
           </table>
           <div className="flex justify-end text-sm"><span className="text-slate-500 mr-2">Total</span><b>{inr(po.totalAmount)}</b></div>
+          {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             <button onClick={openNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            {po.status === 'DRAFT' && <button onClick={() => { confirmPurchaseOrder(po.id); }} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
+            {po.status === 'DRAFT' && <button onClick={() => doConfirmPO(po.id)} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">Confirm</button>}
             {(po.status === 'CONFIRMED') && !bill && (
-              <button onClick={() => { const b = createBillFromPO(po.id); setSelected(po); }} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">Create Bill</button>
+              <button onClick={() => doCreateBill(po.id)} disabled={busy} className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-semibold">{busy ? 'Creating…' : 'Create Bill'}</button>
             )}
             {bill && <Link to="/vendor-bills" className="px-6 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold">Open Bill {bill.billNumber}</Link>}
           </div>
