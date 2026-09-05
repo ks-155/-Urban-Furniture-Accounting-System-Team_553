@@ -442,7 +442,7 @@ export const AccountingProvider = ({ children }) => {
   };
 
   // Workflow: Purchase
-  const createPurchaseOrder = (vendorId, lines) => {
+  const createPurchaseOrder = (vendorId, lines, extra = {}) => {
     const vendor = contacts.find(c => c.id === Number(vendorId));
     const totalAmount = lines.reduce((sum, l) => sum + (Number(l.quantity) * Number(l.unitPrice)), 0);
     const poNumber = getNextSequence('PO', purchaseOrders);
@@ -452,7 +452,7 @@ export const AccountingProvider = ({ children }) => {
       poNumber,
       vendorId: Number(vendorId),
       vendorName: vendor?.name || 'Unknown Vendor',
-      date: new Date().toISOString().split('T')[0],
+      date: extra.date || new Date().toISOString().split('T')[0],
       status: 'DRAFT',
       totalAmount,
       lines: lines.map(l => ({
@@ -460,7 +460,8 @@ export const AccountingProvider = ({ children }) => {
         productName: products.find(p => p.id === Number(l.productId))?.name || 'Product',
         quantity: Number(l.quantity),
         unitPrice: Number(l.unitPrice),
-        subtotal: Number(l.quantity) * Number(l.unitPrice)
+        subtotal: Number(l.quantity) * Number(l.unitPrice),
+        ...(l.analytic ? { analytic: l.analytic } : {}),
       }))
     };
 
@@ -562,7 +563,7 @@ export const AccountingProvider = ({ children }) => {
   };
 
   // Workflow: Sales
-  const createSalesOrder = (customerId, lines) => {
+  const createSalesOrder = (customerId, lines, extra = {}) => {
     const customer = contacts.find(c => c.id === Number(customerId));
     const subtotal = lines.reduce((sum, l) => sum + (Number(l.quantity) * Number(l.unitPrice)), 0);
     const taxRate = 18;
@@ -575,7 +576,7 @@ export const AccountingProvider = ({ children }) => {
       soNumber,
       customerId: Number(customerId),
       customerName: customer?.name || 'Customer',
-      date: new Date().toISOString().split('T')[0],
+      date: extra.date || new Date().toISOString().split('T')[0],
       status: 'DRAFT',
       taxRate,
       taxAmount,
@@ -585,7 +586,8 @@ export const AccountingProvider = ({ children }) => {
         productName: products.find(p => p.id === Number(l.productId))?.name || 'Product',
         quantity: Number(l.quantity),
         unitPrice: Number(l.unitPrice),
-        subtotal: Number(l.quantity) * Number(l.unitPrice)
+        subtotal: Number(l.quantity) * Number(l.unitPrice),
+        ...(l.analytic ? { analytic: l.analytic } : {}),
       }))
     };
 
@@ -694,6 +696,33 @@ export const AccountingProvider = ({ children }) => {
     setCustomerInvoices(prev => prev.map(i => i.id === invId ? { ...i, status: 'PAID', paidAmount: inv.totalAmount } : i));
   };
 
+  // Manual Journal Entry (balanced entries only — Excalidraw blocking rule)
+  const createJournalEntry = ({ journalName, date, reference, lines }) => {
+    const debit = lines.reduce((s, l) => s + Number(l.debit || 0), 0);
+    const credit = lines.reduce((s, l) => s + Number(l.credit || 0), 0);
+    if (Math.abs(debit - credit) > 0.005) {
+      return { success: false, error: `Journal Entry is unbalanced! Total Debit (${debit}) != Total Credit (${credit})` };
+    }
+    const entryNumber = getNextSequence('JE', journalEntries);
+    const newEntry = {
+      id: journalEntries.length + 1,
+      entryNumber,
+      date: date || new Date().toISOString().split('T')[0],
+      reference: reference || 'Manual entry',
+      journalName: journalName || 'General',
+      status: 'POSTED',
+      items: lines.map((l) => ({
+        accountCode: l.accountCode || '',
+        accountName: l.accountName || '',
+        partnerName: l.partnerName || '',
+        debit: Number(l.debit || 0),
+        credit: Number(l.credit || 0),
+      })),
+    };
+    setJournalEntries(prev => [newEntry, ...prev]);
+    return { success: true, entry: newEntry };
+  };
+
   return (
     <AccountingContext.Provider value={{
       currentUser,
@@ -729,10 +758,9 @@ export const AccountingProvider = ({ children }) => {
       confirmCustomerInvoice,
       registerInvoicePayment,
       payments,
-      journalEntries
-    }}>
-      {children}
-    </AccountingContext.Provider>
+      journalEntries,
+      createJournalEntry
+    }}>{children}</AccountingContext.Provider>
   );
 };
 

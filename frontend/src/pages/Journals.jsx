@@ -2,12 +2,14 @@ import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { journalsAPI, accountsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
-import { Plus, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus, Wifi, WifiOff } from 'lucide-react';
+
+const emptyForm = { name: '', code: '', type: 'SALES', defaultAccountId: '' };
 
 export const Journals = () => {
   const { journals: mockJournals, accounts: mockAccounts } = useAccounting();
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', type: 'SALES', defaultAccountId: '' });
+  const [view, setView] = useState('list');
+  const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -17,14 +19,17 @@ export const Journals = () => {
   const accountsFetcher = useCallback(() => accountsAPI.list(), []);
   const { data: accounts } = useLiveList(accountsFetcher, 'accounts', mockAccounts);
 
-  const handleCreate = async (e) => {
+  const openNew = () => { setForm(emptyForm); setFormError(''); setView('form'); };
+  const resetNew = () => { setForm(emptyForm); setFormError(''); };
+
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setFormError('');
     if (!form.defaultAccountId) { setFormError('Select a default account from Chart of Accounts.'); return; }
     setSaving(true);
     try {
       const res = await journalsAPI.create({ ...form, code: form.code.toUpperCase(), defaultAccountId: Number(form.defaultAccountId) });
-      if (res.data?.journal) { setForm({ name: '', code: '', type: 'SALES', defaultAccountId: '' }); setShowForm(false); await refresh(); }
+      if (res.data?.journal) { await refresh(); setView('list'); }
     } catch (err) {
       setFormError(err?.response?.data?.error || 'Failed to create journal. Is the backend running?');
     } finally {
@@ -35,20 +40,15 @@ export const Journals = () => {
   const input = 'w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm';
   const label = 'block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1';
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Journals (List View)</h1>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
-          </p>
+  if (view === 'form') {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-xl font-bold text-slate-900">Journal — Form View</h1>
+          <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
         </div>
-        <button onClick={() => { setShowForm(!showForm); setFormError(''); }} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form onSubmit={handleConfirm} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+          {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{formError}</div>}
           <div><label className={label}>Journal Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Sales Journal" className={input} required /></div>
           <div><label className={label}>Code (unique)</label><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="SALES" className={input} required /></div>
           <div>
@@ -67,11 +67,26 @@ export const Journals = () => {
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
             </select>
           </div>
-          {formError && <div className="sm:col-span-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{formError}</div>}
-          <div className="sm:col-span-2"><button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60">{saving ? 'Saving…' : 'Create'}</button></div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
+            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : 'Confirm'}</button>
+          </div>
         </form>
-      )}
+      </div>
+    );
+  }
 
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Journals (List View)</h1>
+          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+            {live ? <><Wifi className="w-3.5 h-3.5 text-emerald-600" /> Live from backend</> : <><WifiOff className="w-3.5 h-3.5 text-amber-600" /> Offline demo data</>}
+          </p>
+        </div>
+        <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
+      </div>
       {loading && <p className="text-sm text-slate-500">Loading journals…</p>}
       {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
       {!loading && (

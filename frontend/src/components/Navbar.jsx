@@ -208,7 +208,14 @@ export const Navbar = ({ onOpenCreateUser }) => {
                         onClick={() => setActiveDropdown(null)}
                         className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
                       >
-                        Budgets & Analytics
+                        Budgets (Draft/Confirmed/Revised)
+                      </Link>
+                      <Link
+                        to="/analytics"
+                        onClick={() => setActiveDropdown(null)}
+                        className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                      >
+                        Analyticals (Cost Centers)
                       </Link>
                       <div className="border-t border-slate-100 my-1"></div>
                       <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">

@@ -11,6 +11,7 @@ export const Contacts = () => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [view, setView] = useState('list'); // list | form
+  const [listMode, setListMode] = useState('list'); // list | kanban (Excalidraw view toggle)
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
@@ -23,6 +24,7 @@ export const Contacts = () => {
   const { data: list, loading, error, live, refresh } = useLiveList(fetcher, 'contacts', mockContacts);
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setFormError(''); setView('form'); };
+  const resetNew = () => { setEditing(null); setForm(emptyForm); setFormError(''); };
   const openRow = (c) => {
     setEditing(c);
     setForm({ name: c.name || '', type: c.type || 'CUSTOMER', email: c.email || '', phone: phoneOf(c) === '—' ? '' : phoneOf(c), city: c.city || '', state: c.state || '', pincode: c.pincode || '' });
@@ -114,8 +116,8 @@ export const Contacts = () => {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setView('list')} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : editing ? 'Confirm' : 'Create'}</button>
+            <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
+            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -144,11 +146,28 @@ export const Contacts = () => {
           <option value="VENDOR">Vendor</option>
           <option value="BOTH">Both</option>
         </select>
+        <div className="flex rounded-xl border border-slate-200 overflow-hidden text-sm font-semibold">
+          <button onClick={() => setListMode('list')} className={`px-3 py-2 ${listMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>List View</button>
+          <button onClick={() => setListMode('kanban')} className={`px-3 py-2 ${listMode === 'kanban' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Kanban View</button>
+        </div>
         <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">Back</button>
       </div>
       {loading && <p className="text-sm text-slate-500">Loading contacts…</p>}
       {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
-      {!loading && (
+      {!loading && listMode === 'kanban' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {list.map((c) => (
+            <div key={c.id} onClick={() => openRow(c)} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all">
+              <p className="font-bold text-slate-900">{c.name}</p>
+              <p className="text-xs text-slate-500 mt-1">{c.email}</p>
+              <p className="text-xs text-slate-500">{phoneOf(c)}</p>
+              <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[11px] font-bold ${c.type === 'VENDOR' ? 'bg-emerald-50 text-emerald-700' : c.type === 'BOTH' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>{c.type}</span>
+            </div>
+          ))}
+          {list.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-8">No contacts found.</p>}
+        </div>
+      )}
+      {!loading && listMode === 'list' && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>

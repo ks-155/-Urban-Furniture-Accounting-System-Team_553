@@ -24,6 +24,8 @@ export const Products = () => {
   const { data: list, loading, error, live, refresh } = useLiveList(fetcher, 'products', mockProducts);
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setFormError(''); setView('form'); };
+  const resetNew = () => { setEditing(null); setForm(emptyForm); setFormError(''); };
+  const [listMode, setListMode] = useState('list');
   const openRow = (p) => {
     setEditing(p);
     setForm({ name: p.name || '', type: p.type || 'GOODS', category: p.category || '', salesPrice: String(p.salesPrice ?? ''), costPrice: String(p.costPrice ?? '') });
@@ -97,8 +99,8 @@ export const Products = () => {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setView('list')} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : editing ? 'Confirm' : 'Create'}</button>
+            <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
+            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -127,10 +129,26 @@ export const Products = () => {
           <option value="SERVICE">Service</option>
           <option value="COMBO">Combo</option>
         </select>
+        <div className="flex rounded-xl border border-slate-200 overflow-hidden text-sm font-semibold">
+          <button onClick={() => setListMode('list')} className={`px-3 py-2 ${listMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>List View</button>
+          <button onClick={() => setListMode('kanban')} className={`px-3 py-2 ${listMode === 'kanban' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>Kanban View</button>
+        </div>
       </div>
       {loading && <p className="text-sm text-slate-500">Loading products…</p>}
       {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
-      {!loading && (
+      {!loading && listMode === 'kanban' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {list.map((p) => (
+            <div key={p.id} onClick={() => openRow(p)} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 cursor-pointer hover:shadow-md hover:border-blue-200 transition-all text-center">
+              <div className="w-12 h-12 mx-auto rounded-xl bg-slate-100 flex items-center justify-center text-lg font-bold text-slate-500">{p.name.charAt(0)}</div>
+              <p className="font-bold text-slate-900 mt-2">{p.name}</p>
+              <p className="text-xs text-slate-500 mt-1">Sales Price {inr(p.salesPrice)} • Cost {inr(p.costPrice)}</p>
+            </div>
+          ))}
+          {list.length === 0 && <p className="text-sm text-slate-500 col-span-full text-center py-8">No products found.</p>}
+        </div>
+      )}
+      {!loading && listMode === 'list' && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
