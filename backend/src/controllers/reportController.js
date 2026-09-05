@@ -1,11 +1,31 @@
 const prisma = require('../prisma');
 
+function buildDateFilter(year, startDate, endDate) {
+  const filter = { status: 'POSTED' };
+  if (year) {
+    const yr = parseInt(year, 10);
+    if (!isNaN(yr)) {
+      filter.date = {
+        gte: new Date(`${yr}-01-01T00:00:00.000Z`),
+        lte: new Date(`${yr}-12-31T23:59:59.999Z`),
+      };
+    }
+  } else if (startDate || endDate) {
+    filter.date = {};
+    if (startDate) filter.date.gte = new Date(startDate);
+    if (endDate) filter.date.lte = new Date(endDate);
+  }
+  return filter;
+}
+
 // GET /api/reports/balance-sheet
 async function getBalanceSheet(req, res) {
   try {
+    const entryFilter = buildDateFilter(req.query.year, req.query.startDate, req.query.endDate);
     const accounts = await prisma.account.findMany({
       include: {
         journalItems: {
+          where: { entry: entryFilter },
           select: { debit: true, credit: true },
         },
       },
@@ -78,9 +98,11 @@ async function getBalanceSheet(req, res) {
 // GET /api/reports/profit-loss
 async function getProfitLoss(req, res) {
   try {
+    const entryFilter = buildDateFilter(req.query.year, req.query.startDate, req.query.endDate);
     const accounts = await prisma.account.findMany({
       include: {
         journalItems: {
+          where: { entry: entryFilter },
           select: { debit: true, credit: true },
         },
       },
@@ -143,6 +165,7 @@ async function getBudgetReport(req, res) {
         analyticAccount: {
           include: {
             journalItems: {
+              where: { entry: { status: 'POSTED' } },
               select: { debit: true, credit: true },
             },
           },

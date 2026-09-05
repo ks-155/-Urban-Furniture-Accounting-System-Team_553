@@ -146,6 +146,9 @@ async function createSalesOrder(req, res) {
       }
 
       const price = unitPrice !== undefined ? parseFloat(unitPrice) : parseFloat(product.salesPrice);
+      if (isNaN(price) || price < 0) {
+        return res.status(400).json({ error: 'Unit price cannot be negative.' });
+      }
       const qty = parseFloat(quantity);
       const lineSubtotal = qty * price;
       subtotal += lineSubtotal;

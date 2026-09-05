@@ -118,6 +118,10 @@ async function createPurchaseOrder(req, res) {
         return res.status(400).json({ error: 'Quantity must be greater than zero.' });
       }
 
+      if (isNaN(price) || price < 0) {
+        return res.status(400).json({ error: 'Unit price cannot be negative.' });
+      }
+
       const subtotal = qty * price;
       calculatedTotal += subtotal;
 
@@ -166,6 +170,10 @@ async function confirmPurchaseOrder(req, res) {
 
     const po = await prisma.purchaseOrder.findUnique({ where: { id: poId } });
     if (!po) return res.status(404).json({ error: 'Purchase order not found.' });
+
+    if (po.status !== 'DRAFT') {
+      return res.status(400).json({ error: `Cannot confirm purchase order with status ${po.status}. Only DRAFT orders can be confirmed.` });
+    }
 
     const updated = await prisma.purchaseOrder.update({
       where: { id: poId },

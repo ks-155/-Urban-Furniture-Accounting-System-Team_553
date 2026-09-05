@@ -44,6 +44,7 @@ export const CustomerPortal = () => {
   // Invoice Payment Modal state
   const [payFor, setPayFor] = useState(null);
   const [payError, setPayError] = useState('');
+  const [paySuccessMessage, setPaySuccessMessage] = useState('');
 
   // Vendor Bill Submission Modal state
   const [billPO, setBillPO] = useState(null);
@@ -88,7 +89,10 @@ export const CustomerPortal = () => {
         setPayError(res.error || 'Payment failed.');
         return;
       }
+      const paidInv = payFor;
       setPayFor(null);
+      setPaySuccessMessage(`Payment of ${inr(paidInv.totalAmount || paidInv.amountDue)} for invoice ${paidInv.invNumber || ''} completed successfully! Receipts ledger and accounting entries updated.`);
+      setTimeout(() => setPaySuccessMessage(''), 6000);
     } catch (err) {
       setPayError(err?.message || 'Payment failed.');
     }
@@ -484,6 +488,13 @@ export const CustomerPortal = () => {
           <Plus className="w-4 h-4" /> [ + Place New Order / Buy Furniture ]
         </button>
       </div>
+
+      {paySuccessMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold flex items-center gap-2 shadow-sm animate-fade-in">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <span>{paySuccessMessage}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {card(<ShoppingBag className="w-5 h-5 text-blue-600" />, 'My Orders Placed', myOrders.length, 'text-slate-900')}

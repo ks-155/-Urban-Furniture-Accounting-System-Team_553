@@ -39,7 +39,7 @@ const FilterBar = ({ title, live, years, year, setYear }) => (
       <h1 className="text-xl font-bold text-slate-900">{title}</h1>
       <div className="mt-1"><LiveBadge live={live} />{live && <span className="text-xs text-slate-400"> - all-time ledger (no date filter server-side)</span>}</div>
     </div>
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 no-print">
       {!live && (
         <select value={year} onChange={(e) => setYear(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold">
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -54,7 +54,7 @@ const FilterBar = ({ title, live, years, year, setYear }) => (
 export const BalanceSheet = () => {
   const { journalEntries } = useAccounting();
   const { years, year, setYear, filtered } = useYearFilter(journalEntries);
-  const [live, setLive] = useState(null);
+  const [live, setLive] = useState(undefined);
 
   useEffect(() => {
     reportsAPI.balanceSheet()
@@ -65,6 +65,10 @@ export const BalanceSheet = () => {
   const row = (label, val) => (
     <div className="flex justify-between py-2 border-b border-slate-50 text-sm"><span className="text-slate-600">{label}</span><b>{inr(val)}</b></div>
   );
+
+  if (live === undefined) {
+    return <div className="max-w-5xl mx-auto px-4 py-16 text-center text-sm text-slate-500">Loading Balance Sheet...</div>;
+  }
 
   if (live) {
     return (
@@ -139,6 +143,10 @@ export const ProfitLoss = () => {
     <div className="flex justify-between py-2 border-b border-slate-50 text-sm"><span className={bold ? 'font-bold' : 'text-slate-600'}>{label}</span><b>{inr(val)}</b></div>
   );
 
+  if (live === undefined) {
+    return <div className="max-w-3xl mx-auto px-4 py-16 text-center text-sm text-slate-500">Loading P&amp;L...</div>;
+  }
+
   if (live) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -154,10 +162,6 @@ export const ProfitLoss = () => {
         </div>
       </div>
     );
-  }
-
-  if (live === undefined) {
-    return <div className="max-w-3xl mx-auto px-4 py-16 text-center text-sm text-slate-500">Loading P&amp;L...</div>;
   }
 
   const m = nets(filtered);
@@ -194,6 +198,10 @@ export const BudgetReport = () => {
       .catch(() => setLive(null));
   }, []);
 
+  if (live === undefined) {
+    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-sm text-slate-500">Loading Budget Report...</div>;
+  }
+
   if (Array.isArray(live)) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -202,7 +210,7 @@ export const BudgetReport = () => {
             <h1 className="text-xl font-bold text-slate-900">Budget Report - Planned vs Actual</h1>
             <div className="mt-1"><LiveBadge live /></div>
           </div>
-          <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
+          <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5 no-print"><Printer className="w-4 h-4" /> Print / PDF</button>
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
