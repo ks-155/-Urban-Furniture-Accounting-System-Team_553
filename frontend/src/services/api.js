@@ -50,7 +50,7 @@ export const authAPI = {
   me: () => api.get('/auth/me'),
 };
 
-// Stubs for Phase 2+ (Member 1). Frontend keeps using mock context until these land.
+// Phase 2 Master Data APIs (live on backend). GETs are public; POST/PUT need JWT (attached above).
 export const contactsAPI = {
   list: (params) => api.get('/contacts', { params }),
   get: (id) => api.get(`/contacts/${id}`),
@@ -59,6 +59,23 @@ export const contactsAPI = {
 };
 
 export const productsAPI = {
-  list: () => api.get('/products'),
+  list: (params) => api.get('/products', { params }),
+  get: (id) => api.get(`/products/${id}`),
   create: (payload) => api.post('/products', payload),
+  update: (id, payload) => api.put(`/products/${id}`, payload),
+};
+
+export const accountsAPI = {
+  list: (params) => api.get('/accounts', { params }),
+  create: (payload) => api.post('/accounts', payload),
+};
+
+export const journalsAPI = {
+  list: () => api.get('/journals'),
+  create: (payload) => api.post('/journals', payload),
+};
+
+export const analyticsAPI = {
+  list: () => api.get('/analytic-accounts'),
+  create: (payload) => api.post('/analytic-accounts', payload),
 };

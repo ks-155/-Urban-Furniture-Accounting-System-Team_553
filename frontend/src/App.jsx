@@ -2,11 +2,23 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AccountingProvider } from './context/AccountingContext';
 import { Navbar } from './components/Navbar';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, StaffRoute } from './components/ProtectedRoute';
 import { CreateUserModal } from './components/CreateUserModal';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
+import { Contacts } from './pages/Contacts';
+import { Products } from './pages/Products';
+import { ChartOfAccounts } from './pages/ChartOfAccounts';
+import { Journals } from './pages/Journals';
+import { Analytics } from './pages/Analytics';
+import { PurchaseOrders } from './pages/PurchaseOrders';
+import { VendorBills } from './pages/VendorBills';
+import { SalesOrders } from './pages/SalesOrders';
+import { CustomerInvoices } from './pages/CustomerInvoices';
+import { JournalEntries } from './pages/JournalEntries';
+import { Budgets } from './pages/Budgets';
+import { BalanceSheet, ProfitLoss, BudgetReport } from './pages/Reports';
 
 const ComingSoon = ({ title }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
@@ -25,19 +37,21 @@ function Shell() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/sales-orders" element={<ProtectedRoute><ComingSoon title="Sales Orders (Phase 3)" /></ProtectedRoute>} />
-        <Route path="/customer-invoices" element={<ProtectedRoute><ComingSoon title="Customer Invoices (Phase 3)" /></ProtectedRoute>} />
-        <Route path="/purchase-orders" element={<ProtectedRoute><ComingSoon title="Purchase Orders (Phase 4)" /></ProtectedRoute>} />
-        <Route path="/vendor-bills" element={<ProtectedRoute><ComingSoon title="Vendor Bills (Phase 4)" /></ProtectedRoute>} />
-        <Route path="/payments" element={<ProtectedRoute><ComingSoon title="Payments (Phase 3/4)" /></ProtectedRoute>} />
-        <Route path="/contacts" element={<ProtectedRoute><ComingSoon title="Contacts (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/products" element={<ProtectedRoute><ComingSoon title="Products (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/chart-of-accounts" element={<ProtectedRoute><ComingSoon title="Chart of Accounts (Phase 2)" /></ProtectedRoute>} />
-        <Route path="/budgets" element={<ProtectedRoute><ComingSoon title="Budgets (Phase 5)" /></ProtectedRoute>} />
-        <Route path="/journal-entries" element={<ProtectedRoute><ComingSoon title="Journal Entries (Phase 6)" /></ProtectedRoute>} />
-        <Route path="/reports/balance-sheet" element={<ProtectedRoute><ComingSoon title="Balance Sheet (Phase 7)" /></ProtectedRoute>} />
-        <Route path="/reports/profit-loss" element={<ProtectedRoute><ComingSoon title="Profit & Loss (Phase 7)" /></ProtectedRoute>} />
-        <Route path="/reports/budget-report" element={<ProtectedRoute><ComingSoon title="Budget Report (Phase 7)" /></ProtectedRoute>} />
+        <Route path="/sales-orders" element={<StaffRoute><SalesOrders /></StaffRoute>} />
+        <Route path="/customer-invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
+        <Route path="/purchase-orders" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
+        <Route path="/vendor-bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
+        <Route path="/payments" element={<StaffRoute><ComingSoon title="Payments ledger (Phase 3/4 — pay from Bill/Invoice)" /></StaffRoute>} />
+        <Route path="/contacts" element={<StaffRoute><Contacts /></StaffRoute>} />
+        <Route path="/products" element={<StaffRoute><Products /></StaffRoute>} />
+        <Route path="/chart-of-accounts" element={<StaffRoute><ChartOfAccounts /></StaffRoute>} />
+        <Route path="/journals" element={<StaffRoute><Journals /></StaffRoute>} />
+        <Route path="/budgets" element={<StaffRoute><Budgets /></StaffRoute>} />
+        <Route path="/analytics" element={<StaffRoute><Analytics /></StaffRoute>} />
+        <Route path="/journal-entries" element={<StaffRoute><JournalEntries /></StaffRoute>} />
+        <Route path="/reports/balance-sheet" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
+        <Route path="/reports/profit-loss" element={<StaffRoute><ProfitLoss /></StaffRoute>} />
+        <Route path="/reports/budget-report" element={<StaffRoute><BudgetReport /></StaffRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <CreateUserModal isOpen={createUserOpen} onClose={() => setCreateUserOpen(false)} />

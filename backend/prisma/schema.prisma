@@ -43,6 +43,8 @@ enum JournalType {
 enum DocStatus {
   DRAFT
   CONFIRMED
+  INVOICED
+  BILLED
   POSTED
   PAID
   CANCELLED
