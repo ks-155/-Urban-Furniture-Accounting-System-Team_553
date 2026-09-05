@@ -49,6 +49,7 @@ enum DocStatus {
   POSTED
   PAID
   CANCELLED
+  REVISED
 }
 
 enum PaymentType {
