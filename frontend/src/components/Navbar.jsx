@@ -247,44 +247,18 @@ export const Navbar = ({ onOpenCreateUser }) => {
 
                 {/* 4. REPORT */}
                 <div className="relative">
-                  <button
-                    onClick={() => toggleDropdown('report')}
+                  <Link
+                    to="/reports"
+                    onClick={() => setActiveDropdown(null)}
                     className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeDropdown === 'report' || location.pathname.startsWith('/reports')
+                      location.pathname.startsWith('/reports')
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
                     <BarChart3 className="w-4 h-4 text-amber-600" />
                     <span>Report</span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeDropdown === 'report' ? 'rotate-180 text-blue-700' : 'text-slate-600'}`} />
-                  </button>
-
-                  {activeDropdown === 'report' && (
-                    <div className="absolute left-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                      <Link
-                        to="/reports/balance-sheet"
-                        onClick={() => setActiveDropdown(null)}
-                        className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                      >
-                        Balance Sheet
-                      </Link>
-                      <Link
-                        to="/reports/profit-loss"
-                        onClick={() => setActiveDropdown(null)}
-                        className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                      >
-                        Profit & Loss (P&L)
-                      </Link>
-                      <Link
-                        to="/reports/budget-report"
-                        onClick={() => setActiveDropdown(null)}
-                        className="flex items-center px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                      >
-                        Budget Report
-                      </Link>
-                    </div>
-                  )}
+                  </Link>
                 </div>
 
               </nav>

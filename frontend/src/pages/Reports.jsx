@@ -276,6 +276,23 @@ export const BudgetReport = () => {
   );
 };
 
+export const UnifiedReports = () => {
+  return (
+    <div className="space-y-4 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <h1 className="text-2xl font-bold text-slate-900">Unified Financial Reports</h1>
+        <p className="text-sm text-slate-500">Comprehensive view of Balance Sheet, Profit & Loss, and Budgets.</p>
+      </div>
+      <div className="border-t border-slate-200 mt-4 shadow-sm bg-slate-50" />
+      <BalanceSheet />
+      <div className="border-t border-slate-200 mt-4 shadow-sm bg-slate-50" />
+      <ProfitLoss />
+      <div className="border-t border-slate-200 mt-4 shadow-sm bg-slate-50" />
+      <BudgetReport />
+    </div>
+  );
+};
+
 export const BackBtn = () => (
   <button onClick={() => window.history.back()} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
 );

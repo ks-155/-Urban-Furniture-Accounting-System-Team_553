@@ -19,7 +19,7 @@ import { CustomerInvoices } from './pages/CustomerInvoices';
 import { JournalEntries } from './pages/JournalEntries';
 import { Budgets } from './pages/Budgets';
 import { Payments } from './pages/Payments';
-import { BalanceSheet, ProfitLoss, BudgetReport } from './pages/Reports';
+import { UnifiedReports } from './pages/Reports';
 
 const ComingSoon = ({ title }) => (
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
@@ -55,10 +55,10 @@ function Shell() {
         <Route path="/budgets" element={<StaffRoute><Budgets /></StaffRoute>} />
         <Route path="/analytics" element={<StaffRoute><Analytics /></StaffRoute>} />
         <Route path="/journal-entries" element={<StaffRoute><JournalEntries /></StaffRoute>} />
-        <Route path="/reports" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
-        <Route path="/reports/balance-sheet" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
-        <Route path="/reports/profit-loss" element={<StaffRoute><ProfitLoss /></StaffRoute>} />
-        <Route path="/reports/budget-report" element={<StaffRoute><BudgetReport /></StaffRoute>} />
+        <Route path="/reports" element={<StaffRoute><UnifiedReports /></StaffRoute>} />
+        <Route path="/reports/balance-sheet" element={<Navigate to="/reports" replace />} />
+        <Route path="/reports/profit-loss" element={<Navigate to="/reports" replace />} />
+        <Route path="/reports/budget-report" element={<Navigate to="/reports" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <CreateUserModal isOpen={createUserOpen} onClose={() => setCreateUserOpen(false)} />
