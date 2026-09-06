@@ -63,6 +63,7 @@ export const productsAPI = {
   get: (id) => api.get(`/products/${id}`),
   create: (payload) => api.post('/products', payload),
   update: (id, payload) => api.put(`/products/${id}`, payload),
+  delete: (id) => api.delete(`/products/${id}`),
 };
 
 export const accountsAPI = {

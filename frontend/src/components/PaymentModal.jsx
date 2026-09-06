@@ -37,13 +37,18 @@ export const PaymentModal = ({
 
   const handleConfirm = async (e) => {
     if (e) e.preventDefault();
+    const parsedAmount = parseFloat(amount) || dueAmount;
+    if (parsedAmount > dueAmount) {
+      alert(`Payment amount (${parsedAmount}) cannot exceed due amount (${dueAmount})`);
+      return;
+    }
     setBusy(true);
     setStage('Confirm');
     try {
       await onConfirm({
         paymentType,
         paymentMethod: paymentVia,
-        amount: parseFloat(amount) || dueAmount,
+        amount: parsedAmount,
         date,
         note,
       });
@@ -271,15 +276,19 @@ export const PaymentModal = ({
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
                 <input
                   type="number"
-                  min="1"
+                  min="0.01"
+                  max={dueAmount}
                   step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-8 pr-3.5 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                  className={`w-full pl-8 pr-3.5 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 ${Number(amount) > dueAmount ? 'border-red-400 text-red-700 bg-red-50' : 'border-slate-200 text-slate-900'}`}
                   required
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">Autofill Amount Due from Invoice/Bill</p>
+              <div className="flex justify-between items-center mt-1">
+                <p className="text-[10px] text-slate-400">Autofill Amount Due from Invoice/Bill</p>
+                {Number(amount) > dueAmount && <p className="text-[10px] text-red-600 font-bold">Cannot exceed due amount ({dueAmount})</p>}
+              </div>
             </div>
           </div>
 

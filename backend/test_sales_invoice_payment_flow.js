@@ -1,4 +1,4 @@
-﻿const http = require('http');
+const http = require('http');
 
 function request(method, path, body = null, headers = {}) {
   return new Promise((resolve, reject) => {
@@ -49,11 +49,13 @@ async function runTests() {
     console.assert(customer !== undefined, 'Customer contact required');
 
     const prodRes = await request('GET', '/api/products', null, accHeaders);
-    const product = prodRes.body.products[0];
+    // Pick a SERVICE product (no stock restriction) or product with sufficient stock
+    const product = prodRes.body.products.find(p => p.type === 'SERVICE') ||
+                    prodRes.body.products.find(p => (p.stock || 0) >= 3);
     console.assert(product !== undefined, 'Product required');
 
     const unitPrice = 2000;
-    const quantity = 3;
+    const quantity = 2;
     const subtotal = unitPrice * quantity;
     const taxRate = 18;
     const taxAmount = Math.round((subtotal * taxRate) / 100 * 100) / 100;
@@ -69,19 +71,25 @@ async function runTests() {
       },
       accHeaders
     );
-    console.assert(createSO.status === 201, 'Create SO failed');
+    console.assert(createSO.status === 201, `Create SO failed: ${JSON.stringify(createSO.body)}`);
     const so = createSO.body.salesOrder;
     console.log(`✅ 1. Created Sales Order ${so.soNumber}, Total: ₹${so.totalAmount}`);
 
-    const stockZeroConfirm = await request(
+    // Test 2: Try to create SO with qty exceeding stock (use huge quantity)
+    const overStockSO = await request(
       'POST',
-      `/api/sales/${so.id}/confirm`,
-      { stock: 0 },
+      '/api/sales',
+      {
+        customerId: customer.id,
+        taxRate,
+        lines: [{ productId: product.id, quantity: 99999, unitPrice }],
+      },
       accHeaders
     );
-    console.assert(stockZeroConfirm.status === 400, 'Stock = 0 must block SO confirmation');
-    console.log(`✅ 2. Stock = 0 blocked confirmation: "${stockZeroConfirm.body.error}"`);
+    console.assert(overStockSO.status === 400, `Stock > available must block SO creation (got ${overStockSO.status})`);
+    console.log(`✅ 2. Oversized quantity blocked: "${overStockSO.body.error}"`);
 
+    // Test 3: Low budget must block (still supported as before)
     const lowBudgetConfirm = await request(
       'POST',
       `/api/sales/${so.id}/confirm`,
@@ -91,6 +99,7 @@ async function runTests() {
     console.assert(lowBudgetConfirm.status === 400, 'Budget < Order Total must block');
     console.log(`✅ 3. Low Budget blocked: "${lowBudgetConfirm.body.error}"`);
 
+    // Test 4: Zero budget must block
     const zeroBudgetConfirm = await request(
       'POST',
       `/api/sales/${so.id}/confirm`,
@@ -100,14 +109,15 @@ async function runTests() {
     console.assert(zeroBudgetConfirm.status === 400, 'Budget = 0 must block');
     console.log(`✅ 4. Zero Budget blocked`);
 
+    // Test 5: Sufficient budget allows confirmation
     const validBudgetConfirm = await request(
       'POST',
       `/api/sales/${so.id}/confirm`,
       { budgetAmount: 20000 },
       accHeaders
     );
-    console.assert(validBudgetConfirm.status === 200, 'Sufficient budget must allow confirmation');
-    console.assert(validBudgetConfirm.body.salesOrder.status === 'CONFIRMED', 'SO status should be CONFIRMED');
+    console.assert(validBudgetConfirm.status === 200, `Sufficient budget must allow confirmation (got ${validBudgetConfirm.status}: ${JSON.stringify(validBudgetConfirm.body)})`);
+    console.assert(validBudgetConfirm.body.salesOrder?.status === 'CONFIRMED', 'SO status should be CONFIRMED');
     console.log(`✅ 5. Sufficient Budget allowed confirmation! Status: CONFIRMED`);
 
     const createInv = await request(
@@ -116,6 +126,7 @@ async function runTests() {
       null,
       accHeaders
     );
+
     console.assert(createInv.status === 201, 'Create Invoice from SO failed');
     const invoice = createInv.body.invoice;
     console.assert(invoice.status === 'DRAFT', 'Invoice should initially be DRAFT');

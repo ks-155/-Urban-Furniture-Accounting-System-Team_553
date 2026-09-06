@@ -615,10 +615,11 @@ export const AccountingProvider = ({ children }) => {
     }
   };
 
-  const registerBillPayment = async (billId, paymentMethod = 'BANK') => {
+  const registerBillPayment = async (billId, paymentMethod = 'BANK', amount = null) => {
     try {
-      // No amount sent → backend settles full remaining due (matches Pay modal)
-      const res = await billsAPI.pay(billId, { paymentMethod });
+      const payload = { paymentMethod };
+      if (amount) payload.amount = amount;
+      const res = await billsAPI.pay(billId, payload);
       await syncPurchaseFlow();
       return { success: true, amountDue: res.data?.amountDue ?? 0 };
     } catch (err) {
@@ -801,10 +802,11 @@ export const AccountingProvider = ({ children }) => {
     } // end catch (mock fallback)
   };
 
-  const registerInvoicePayment = async (invId, paymentMethod = 'BANK') => {
+  const registerInvoicePayment = async (invId, paymentMethod = 'BANK', amount = null) => {
     try {
-      // No amount sent → backend settles full remaining due (portal + staff)
-      const res = await invoicesAPI.pay(invId, { paymentMethod });
+      const payload = { paymentMethod };
+      if (amount) payload.amount = amount;
+      const res = await invoicesAPI.pay(invId, payload);
       await syncPurchaseFlow();
       return { success: true, amountDue: res.data?.amountDue ?? 0 };
     } catch (err) {

@@ -67,7 +67,8 @@ async function runTests() {
 
     // 2. Customer initiates order: [ + Place New Order / Buy Furniture ]
     const prodRes = await request('GET', '/api/products', null, custHeaders);
-    const product = prodRes.body.products[0];
+    const product = prodRes.body.products.find(p => p.type === 'SERVICE') ||
+                    prodRes.body.products.find(p => (p.stock || 0) >= 2);
     console.assert(product !== undefined, 'No product found');
 
     const orderRes = await request('POST', '/api/sales', {

@@ -201,53 +201,74 @@ async function confirmBill(req, res) {
     const billAmount = parseFloat(bill.totalAmount);
     const entryNumber = await getNextJENumber();
 
-    // 2. Create the balanced double-entry Journal Entry
-    const journalEntry = await prisma.journalEntry.create({
-      data: {
-        entryNumber,
-        date: bill.billDate,
-        reference: bill.billNumber,
-        journalId: purchaseJournal.id,
-        status: 'POSTED',
-        items: {
-          create: [
-            {
-              accountId: purchaseExpenseAccount.id,
-              partnerId: bill.vendorId,
-              debit: billAmount,
-              credit: 0,
-              label: `Purchase - ${bill.vendor.name}`,
-            },
-            {
-              accountId: creditorAccount.id,
-              partnerId: bill.vendorId,
-              debit: 0,
-              credit: billAmount,
-              label: `Vendor Payable - ${bill.billNumber}`,
-            },
-          ],
-        },
-      },
-      include: {
-        items: { include: { account: true } },
-      },
-    });
+    // 2. Wrap all changes in an atomic transaction
+    const [journalEntry, updatedBill] = await prisma.$transaction(async (tx) => {
+      // 2a. Re-fetch bill lines with product to check types and increment stock
+      const billLines = await tx.vendorBillLine.findMany({
+        where: { billId },
+        include: { product: true }
+      });
 
-    // 3. Update Bill status to CONFIRMED and link Journal Entry
-    const updatedBill = await prisma.vendorBill.update({
-      where: { id: billId },
-      data: {
-        status: 'CONFIRMED',
-        journalEntryId: journalEntry.id,
-      },
-      include: {
-        vendor: true,
-        lines: { include: { product: true } },
-      },
+      // 2b. Increment stock for all GOODS products
+      for (const line of billLines) {
+        if (line.product && line.product.type === 'GOODS') {
+          await tx.product.update({
+            where: { id: line.productId },
+            data: { stock: { increment: line.quantity } }
+          });
+        }
+      }
+
+      // 2c. Create the balanced double-entry Journal Entry
+      const je = await tx.journalEntry.create({
+        data: {
+          entryNumber,
+          date: bill.billDate,
+          reference: bill.billNumber,
+          journalId: purchaseJournal.id,
+          status: 'POSTED',
+          items: {
+            create: [
+              {
+                accountId: purchaseExpenseAccount.id,
+                partnerId: bill.vendorId,
+                debit: billAmount,
+                credit: 0,
+                label: `Purchase - ${bill.vendor.name}`,
+              },
+              {
+                accountId: creditorAccount.id,
+                partnerId: bill.vendorId,
+                debit: 0,
+                credit: billAmount,
+                label: `Vendor Payable - ${bill.billNumber}`,
+              },
+            ],
+          },
+        },
+        include: {
+          items: { include: { account: true } },
+        },
+      });
+
+      // 2d. Update Bill status to CONFIRMED and link Journal Entry
+      const updBill = await tx.vendorBill.update({
+        where: { id: billId },
+        data: {
+          status: 'CONFIRMED',
+          journalEntryId: je.id,
+        },
+        include: {
+          vendor: true,
+          lines: { include: { product: true } },
+        },
+      });
+
+      return [je, updBill];
     });
 
     return res.status(200).json({
-      message: 'Vendor bill confirmed and Journal Entry posted successfully',
+      message: 'Vendor bill confirmed, stock updated, and Journal Entry posted successfully',
       bill: updatedBill,
       journalEntry,
     });
