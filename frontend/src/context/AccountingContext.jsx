@@ -32,37 +32,17 @@ export const AccountingProvider = ({ children }) => {
   });
   const [token, setToken] = useState(() => localStorage.getItem('uf_token') || null);
   const [authLoading, setAuthLoading] = useState(false);
-  const [sessionRestored, setSessionRestored] = useState(false);
+  // Start as TRUE if we already have a cached session — this prevents the "Restoring session…" blink on every refresh.
+  // The background /me call will silently validate and fix the state if the token is stale.
+  const [sessionRestored, setSessionRestored] = useState(() => {
+    try {
+      return !!(localStorage.getItem('uf_token') && localStorage.getItem('uf_user'));
+    } catch {
+      return false;
+    }
+  });
 
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Admin Master', loginId: 'admin', email: 'admin@urbanfurniture.in', role: 'ADMIN', password: 'Admin@123' },
-    { id: 2, name: 'Alex Accountant', loginId: 'accountant01', email: 'alex@urbanfurniture.in', role: 'ACCOUNTANT', password: 'Password@123' },
-    { id: 3, name: 'Nimesh Pathak', loginId: 'nimeshp', email: 'nimesh@gmail.com', role: 'USER', password: 'Password@123' }
-  ]);
-
-  const [contacts, setContacts] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [journals, setJournals] = useState([]);
-  const [budgets, setBudgets] = useState([]);
-
-  // Operational State - 100% Live from PostgreSQL backend
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
-  const [vendorBills, setVendorBills] = useState([]);
-  const [salesOrders, setSalesOrders] = useState([]);
-  const [customerInvoices, setCustomerInvoices] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [journalEntries, setJournalEntries] = useState([]);
-
-  // Auth Functions — real API first (Phase 1 backend), mock fallback for offline demo
-  const persistSession = (jwt, user) => {
-    if (jwt) localStorage.setItem('uf_token', jwt);
-    if (user) localStorage.setItem('uf_user', JSON.stringify(user));
-    setToken(jwt || null);
-    setCurrentUser(user || null);
-  };
-
-  // Validate session on mount when a token exists (GET /api/auth/me)
+  // Background session validation: runs after paint, no blocking spinner unless there's truly no cached session
   useEffect(() => {
     const restore = async () => {
       const savedToken = localStorage.getItem('uf_token');
@@ -95,6 +75,34 @@ export const AccountingProvider = ({ children }) => {
     };
     restore();
   }, []);
+
+  const [users, setUsers] = useState([
+    { id: 1, name: 'Admin Master', loginId: 'admin', email: 'admin@urbanfurniture.in', role: 'ADMIN', password: 'Admin@123' },
+    { id: 2, name: 'Alex Accountant', loginId: 'accountant01', email: 'alex@urbanfurniture.in', role: 'ACCOUNTANT', password: 'Password@123' },
+    { id: 3, name: 'Nimesh Pathak', loginId: 'nimeshp', email: 'nimesh@gmail.com', role: 'USER', password: 'Password@123' }
+  ]);
+
+  const [contacts, setContacts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [journals, setJournals] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+
+  // Operational State - 100% Live from PostgreSQL backend
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [vendorBills, setVendorBills] = useState([]);
+  const [salesOrders, setSalesOrders] = useState([]);
+  const [customerInvoices, setCustomerInvoices] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
+
+  // Auth helpers
+  const persistSession = (jwt, user) => {
+    if (jwt) localStorage.setItem('uf_token', jwt);
+    if (user) localStorage.setItem('uf_user', JSON.stringify(user));
+    setToken(jwt || null);
+    setCurrentUser(user || null);
+  };
 
   const login = async (loginId, password) => {
     setAuthLoading(true);
