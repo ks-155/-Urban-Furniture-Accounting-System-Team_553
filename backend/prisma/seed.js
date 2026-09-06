@@ -154,13 +154,13 @@ async function main() {
 
   const vendorContacts = [];
   for (const v of vendorsRaw) {
-    const c = await prisma.contact.create({ data: { ...v, type: 'VENDOR' } });
+    const c = await prisma.contact.create({ data: { ...v, isVendor: true, isCustomer: false } });
     vendorContacts.push(c);
   }
 
   const customerContacts = [];
   for (const c of customersRaw) {
-    const created = await prisma.contact.create({ data: { ...c, type: 'CUSTOMER' } });
+    const created = await prisma.contact.create({ data: { ...c, isCustomer: true, isVendor: false } });
     customerContacts.push(created);
   }
 
@@ -172,21 +172,24 @@ async function main() {
   const hashedUser = await bcrypt.hash('Password@123', 10);
 
   const usersData = [
-    { loginId: 'admin', name: 'Master Administrator', email: 'admin@urbanfurniture.in', password: hashedAdmin, role: 'ADMIN' },
-    { loginId: 'system_admin', name: 'DevOps System Admin', email: 'sysadmin@urbanfurniture.in', password: hashedAdmin, role: 'ADMIN' },
-    { loginId: 'accountant01', name: 'Alex Accountant', email: 'alex@urbanfurniture.in', password: hashedUser, role: 'ACCOUNTANT' },
-    { loginId: 'finance_lead', name: 'Vikram Sethi (CFO)', email: 'vikram.sethi@urbanfurniture.in', password: hashedUser, role: 'ACCOUNTANT' },
-    { loginId: 'sales01', name: 'Kavita Iyer (Showroom Manager)', email: 'kavita@urbanfurniture.in', password: hashedUser, role: 'USER' },
-    { loginId: 'nimeshp', name: 'Nimesh Pathak', email: 'nimesh@gmail.com', password: hashedUser, role: 'USER', contactId: customerContacts[0].id },
-    { loginId: 'priyas', name: 'Priya Sharma', email: 'priya.sharma@designstudio.in', password: hashedUser, role: 'USER', contactId: customerContacts[1].id },
-    { loginId: 'karanp', name: 'Karan Patel', email: 'karan.patel@pateltech.com', password: hashedUser, role: 'USER', contactId: customerContacts[2].id },
-    { loginId: 'azure01', name: 'Azure Furniture Rep', email: 'azure.rep@azurefurniture.in', password: hashedUser, role: 'USER', contactId: vendorContacts[0].id },
-    { loginId: 'urbantimber01', name: 'Urban Timber Rep', email: 'timber.rep@urbantimber.co.in', password: hashedUser, role: 'USER', contactId: vendorContacts[1].id },
+    { loginId: 'admin', name: 'Master Administrator', email: 'admin@urbanfurniture.in', passwordHash: hashedAdmin, systemRole: 'ADMIN' },
+    { loginId: 'system_admin', name: 'DevOps System Admin', email: 'sysadmin@urbanfurniture.in', passwordHash: hashedAdmin, systemRole: 'ADMIN' },
+    { loginId: 'accountant01', name: 'Alex Accountant', email: 'alex@urbanfurniture.in', passwordHash: hashedUser, systemRole: 'ACCOUNTANT' },
+    { loginId: 'finance_lead', name: 'Vikram Sethi (CFO)', email: 'vikram.sethi@urbanfurniture.in', passwordHash: hashedUser, systemRole: 'ACCOUNTANT' },
+    { loginId: 'sales01', name: 'Kavita Iyer (Showroom Manager)', email: 'kavita@urbanfurniture.in', passwordHash: hashedUser, systemRole: 'STAFF' },
   ];
 
   for (const u of usersData) {
     await prisma.user.create({ data: u });
   }
+  
+  // Link some contacts to STAFF users
+  await prisma.user.create({ data: { loginId: 'nimeshp', name: 'Nimesh Pathak', email: 'nimesh@gmail.com', passwordHash: hashedUser, systemRole: 'STAFF', contact: { connect: { id: customerContacts[0].id } } } });
+  await prisma.user.create({ data: { loginId: 'priyas', name: 'Priya Sharma', email: 'priya.sharma@designstudio.in', passwordHash: hashedUser, systemRole: 'STAFF', contact: { connect: { id: customerContacts[1].id } } } });
+  await prisma.user.create({ data: { loginId: 'karanp', name: 'Karan Patel', email: 'karan.patel@pateltech.com', passwordHash: hashedUser, systemRole: 'STAFF', contact: { connect: { id: customerContacts[2].id } } } });
+  await prisma.user.create({ data: { loginId: 'azure01', name: 'Azure Furniture Rep', email: 'azure.rep@azurefurniture.in', passwordHash: hashedUser, systemRole: 'STAFF', contact: { connect: { id: vendorContacts[0].id } } } });
+  await prisma.user.create({ data: { loginId: 'urbantimber01', name: 'Urban Timber Rep', email: 'timber.rep@urbantimber.co.in', passwordHash: hashedUser, systemRole: 'STAFF', contact: { connect: { id: vendorContacts[1].id } } } });
+
 
   // ==========================================
   // 6. PRODUCT CATALOG (48 Products across 9 Categories)
