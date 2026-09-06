@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
-import { accountsAPI, journalsAPI } from '../services/api';
+import { accountsAPI, journalsAPI, contactsAPI } from '../services/api';
 import { useLiveList } from '../hooks/useLiveList';
 import { ArrowLeft, Plus, Search } from 'lucide-react';
 
@@ -8,7 +8,7 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const entryTotal = (e) => e.items.reduce((s, i) => s + Number(i.debit || 0), 0);
 
 export const JournalEntries = () => {
-  const { journalEntries, accounts: mockAccounts, journals: mockJournals, createJournalEntry, syncAllData } = useAccounting();
+  const { journalEntries, accounts: mockAccounts, journals: mockJournals, contacts: mockContacts, createJournalEntry, syncAllData } = useAccounting();
 
   React.useEffect(() => {
     if (syncAllData) syncAllData();
@@ -18,14 +18,18 @@ export const JournalEntries = () => {
   const { data: liveAccounts } = useLiveList(accountsFetcher, 'accounts', mockAccounts);
   const journalsFetcher = useCallback(() => journalsAPI.list(), []);
   const { data: liveJournals } = useLiveList(journalsFetcher, 'journals', mockJournals);
+  const contactsFetcher = useCallback(() => contactsAPI.list(), []);
+  const { data: liveContacts } = useLiveList(contactsFetcher, 'contacts', mockContacts);
+
   const accounts = liveAccounts.length ? liveAccounts : mockAccounts;
   const journals = liveJournals.length ? liveJournals : mockJournals;
+  const contacts = liveContacts.length ? liveContacts : mockContacts;
   const [selectedId, setSelectedId] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [jName, setJName] = useState(journals[0]?.name || 'Purchase Journal');
   const [jDate, setJDate] = useState(new Date().toISOString().split('T')[0]);
   const [jRef, setJRef] = useState('');
-  const [rows, setRows] = useState([{ accountId: '', debit: '', credit: '' }, { accountId: '', debit: '', credit: '' }]);
+  const [rows, setRows] = useState([{ accountId: '', partnerId: '', debit: '', credit: '' }, { accountId: '', partnerId: '', debit: '', credit: '' }]);
   const [formError, setFormError] = useState('');
   const [posting, setPosting] = useState(false);
   const [search, setSearch] = useState('');
@@ -47,7 +51,16 @@ export const JournalEntries = () => {
     const jMatch = journals.find((j) => j.name === jName);
     const lines = rows.filter((r) => r.accountId).map((r) => {
       const a = accounts.find((x) => String(x.id) === String(r.accountId));
-      return { accountId: r.accountId, accountCode: a?.code || '', accountName: a?.name || '', debit: Number(r.debit || 0), credit: Number(r.credit || 0) };
+      const p = contacts.find((x) => String(x.id) === String(r.partnerId));
+      return { 
+        accountId: r.accountId, 
+        accountCode: a?.code || '', 
+        accountName: a?.name || '', 
+        partnerId: r.partnerId || null,
+        partnerName: p?.name || '',
+        debit: Number(r.debit || 0), 
+        credit: Number(r.credit || 0) 
+      };
     });
     if (lines.length < 2) { setFormError('Add at least two lines with accounts.'); return; }
     setPosting(true);
@@ -92,7 +105,12 @@ export const JournalEntries = () => {
                   <td className="py-2 pr-2 min-w-[180px]"><select value={r.accountId} onChange={(e) => setRows(rows.map((x, xi) => xi === i ? { ...x, accountId: e.target.value } : x))} className={input}>
                     <option value="">Select…</option>{accounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
                   </select></td>
-                  <td className="py-2 pr-2 text-slate-400 text-xs">—</td>
+                  <td className="py-2 pr-2 min-w-[150px]">
+                    <select value={r.partnerId} onChange={(e) => setRows(rows.map((x, xi) => xi === i ? { ...x, partnerId: e.target.value } : x))} className={input}>
+                      <option value="">None</option>
+                      {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </td>
                   <td className="py-2 pr-2 w-28"><input type="number" min="0" value={r.debit} onChange={(e) => setRows(rows.map((x, xi) => xi === i ? { ...x, debit: e.target.value } : x))} className={input} /></td>
                   <td className="py-2 pr-2 w-28"><input type="number" min="0" value={r.credit} onChange={(e) => setRows(rows.map((x, xi) => xi === i ? { ...x, credit: e.target.value } : x))} className={input} /></td>
                   <td className="py-2"><button onClick={() => setRows(rows.filter((_, xi) => xi !== i))} className="text-red-500 text-xs font-bold">✕</button></td>

@@ -28,9 +28,12 @@ enum ProductType {
 enum AccountType {
   ASSET
   LIABILITY
+  BANK
   CAPITAL
+  CASH
   INCOME
   EXPENSE
+  OTHER_EXPENSE
 }
 
 enum JournalType {

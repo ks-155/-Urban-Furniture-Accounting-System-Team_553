@@ -8,7 +8,8 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractio
 const emptyForm = { code: '', name: '', type: 'ASSET' };
 const typeColor = (t) => ({
   ASSET: 'bg-blue-50 text-blue-700', LIABILITY: 'bg-red-50 text-red-700', CAPITAL: 'bg-purple-50 text-purple-700',
-  INCOME: 'bg-emerald-50 text-emerald-700', EXPENSE: 'bg-amber-50 text-amber-700',
+  BANK: 'bg-indigo-50 text-indigo-700', CASH: 'bg-teal-50 text-teal-700',
+  INCOME: 'bg-emerald-50 text-emerald-700', EXPENSE: 'bg-amber-50 text-amber-700', OTHER_EXPENSE: 'bg-orange-50 text-orange-700'
 }[t] || 'bg-slate-100 text-slate-700');
 
 export const ChartOfAccounts = () => {
@@ -61,11 +62,18 @@ export const ChartOfAccounts = () => {
           <div>
             <label className={label}>Type</label>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={input}>
-              <option value="ASSET">Asset</option>
-              <option value="LIABILITY">Liability</option>
-              <option value="CAPITAL">Capital</option>
-              <option value="INCOME">Income</option>
-              <option value="EXPENSE">Expense</option>
+              <optgroup label="Balance Sheet">
+                <option value="ASSET">Asset</option>
+                <option value="LIABILITY">Liability</option>
+                <option value="BANK">Bank</option>
+                <option value="CAPITAL">Capital</option>
+                <option value="CASH">Cash</option>
+              </optgroup>
+              <optgroup label="Profit and Loss">
+                <option value="INCOME">Income</option>
+                <option value="EXPENSE">Expenses</option>
+                <option value="OTHER_EXPENSE">Other Expenses</option>
+              </optgroup>
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
