@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAccounting } from '../context/AccountingContext';
 import { reportsAPI } from '../services/api';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, PieChart } from 'lucide-react';
 
 const inr = (n) => `\u20B9${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -190,6 +190,7 @@ export const ProfitLoss = () => {
 export const BudgetReport = () => {
   const { budgets: mockBudgets } = useAccounting();
   const [live, setLive] = useState(undefined);
+  const [expandedChart, setExpandedChart] = useState(null);
 
   useEffect(() => {
     reportsAPI.budget()
@@ -202,31 +203,53 @@ export const BudgetReport = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Budget Report - Planned vs Actual</h1>
+            <h1 className="text-xl font-bold text-slate-900">Budget Report (List View)</h1>
           </div>
           <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-[11px] uppercase text-slate-500 border-b border-slate-100">
-              <th className="px-4 py-3">Budget</th><th className="px-4 py-3">Analytic</th><th className="px-4 py-3 text-right">Planned</th>
-              <th className="px-4 py-3 text-right">Committed</th><th className="px-4 py-3 text-right">Achieved</th>
-              <th className="px-4 py-3 text-right">Achieved %</th><th className="px-4 py-3 text-right">To Achieve</th><th className="px-4 py-3">Status</th>
+            <thead><tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+              <th className="px-4 py-3">Budget</th>
+              <th className="px-4 py-3">Start Date</th>
+              <th className="px-4 py-3">End Date</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-center">Pie Chart</th>
             </tr></thead>
             <tbody>
               {live.map((b, i) => (
-                <tr key={i} className="border-b border-slate-50 last:border-0">
-                  <td className="px-4 py-3 font-bold">{b.budgetName}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.analyticAccount}</td>
-                  <td className="px-4 py-3 text-right">{inr(b.planned)}</td>
-                  <td className="px-4 py-3 text-right">{inr(b.committed)}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{inr(b.achieved)}</td>
-                  <td className="px-4 py-3 text-right">{Number(b.achievedPercent || 0).toFixed(1)}%</td>
-                  <td className="px-4 py-3 text-right">{inr(b.amountToAchieve)}</td>
-                  <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">{b.status}</span></td>
-                </tr>
+                <React.Fragment key={i}>
+                  <tr className="border-b border-slate-50 last:border-0">
+                    <td className="px-4 py-3 font-bold text-slate-900">{b.budgetName}</td>
+                    <td className="px-4 py-3 text-slate-600">{b.periodStart ? String(b.periodStart).slice(0, 10) : '—'}</td>
+                    <td className="px-4 py-3 text-slate-600">{b.periodEnd ? String(b.periodEnd).slice(0, 10) : '—'}</td>
+                    <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">{b.status}</span></td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => setExpandedChart(expandedChart === b.id ? null : b.id)} className="p-1.5 hover:bg-slate-100 rounded-md transition text-slate-600">
+                        <PieChart className="w-5 h-5 text-indigo-600" />
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedChart === b.id && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={5} className="px-4 py-6 border-b border-slate-100">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+                          <div className="w-48 h-48 rounded-full border-4 border-white shadow-md flex items-center justify-center text-center overflow-hidden" 
+                               style={{ background: `conic-gradient(rgb(16 185 129) ${b.achievedPercent}%, rgb(244 63 94) 0)` }}>
+                            {/* CSS pie chart using conic-gradient (Achieved = Emerald, Balance = Rose) */}
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-emerald-500 rounded-sm"></div><p className="font-semibold text-slate-700">Achieved: {inr(b.achieved)} ({Number(b.achievedPercent || 0).toFixed(1)}%)</p></div>
+                            <div className="flex items-center gap-2"><div className="w-4 h-4 bg-rose-500 rounded-sm"></div><p className="font-semibold text-slate-700">Balance: {inr(b.amountToAchieve)}</p></div>
+                            <div className="flex items-center gap-2 mt-4 pt-2 border-t border-slate-200"><p className="font-bold text-slate-900">Total Committed: {inr(b.committed)}</p></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
-              {live.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-slate-500">No budgets yet.</td></tr>}
+              {live.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No budgets yet.</td></tr>}
             </tbody>
           </table>
         </div>

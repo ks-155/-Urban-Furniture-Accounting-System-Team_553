@@ -218,6 +218,8 @@ async function getBudgetReport(req, res) {
       return {
         id: b.id,
         budgetName: b.name,
+        periodStart: b.periodStart,
+        periodEnd: b.periodEnd,
         analyticAccount: b.analyticAccount ? b.analyticAccount.name : '—',
         planned,
         committed,

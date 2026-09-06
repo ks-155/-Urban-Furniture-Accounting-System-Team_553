@@ -186,11 +186,31 @@ export const Budgets = () => {
           </div>
           {origLink && <p className="text-xs">Revision Of: <button onClick={() => setSelectedId(origLink.id)} className="text-blue-700 font-bold underline">Original Budget - {origLink.name}</button></p>}
           {revisedLink && <p className="text-xs">Revised Budget: <button onClick={() => setSelectedId(revisedLink.id)} className="text-blue-700 font-bold underline">{revisedLink.name}</button> (click to open revised)</p>}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm bg-slate-50/70 rounded-xl p-4">
-            <div><p className="text-[11px] uppercase font-bold text-slate-500">Committed Amount</p><p className="font-bold">{inr(c)}</p></div>
-            <div><p className="text-[11px] uppercase font-bold text-slate-500">Achieved Amount</p><p className="font-bold">{selected.status === 'DRAFT' ? '- (visible when Confirmed)' : inr(a)}</p></div>
-            <div><p className="text-[11px] uppercase font-bold text-slate-500">Achieved %</p><p className="font-bold">{selected.status === 'DRAFT' ? '-' : achievedPct}</p></div>
-            <div><p className="text-[11px] uppercase font-bold text-slate-500">Amount To Achieve</p><p className="font-bold">{selected.status === 'DRAFT' ? '-' : inr(toAchieve)}</p></div>
+          <div className="overflow-x-auto rounded-xl border border-slate-200 mt-6">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3">Analytic</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3 text-right">Committed Amount</th>
+                  <th className="px-4 py-3 text-right">Achieved Amount</th>
+                  <th className="px-4 py-3 text-right">Achieved %</th>
+                  <th className="px-4 py-3 text-right">Amount To Achieve</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                <tr>
+                  <td className="px-4 py-4 font-semibold text-slate-900">{selected.analyticAccount}</td>
+                  <td className="px-4 py-4 text-slate-600">{analytics.find(a => a.id === selected.analyticAccountId)?.type || 'EXPENSE'}</td>
+                  <td className="px-4 py-4 text-right font-medium text-slate-900">{inr(c)}</td>
+                  <td className="px-4 py-4 text-right font-medium text-slate-900">
+                    {selected.status === 'DRAFT' ? '-' : <button className="text-blue-600 font-bold hover:underline" onClick={() => {}} title="Click to open list view of all Invoices/Bills having same analytical">{inr(a)}</button>}
+                  </td>
+                  <td className="px-4 py-4 text-right font-medium text-slate-600">{selected.status === 'DRAFT' ? '-' : achievedPct}</td>
+                  <td className="px-4 py-4 text-right font-medium text-slate-900">{selected.status === 'DRAFT' ? '-' : inr(toAchieve)}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           {actionError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{actionError}</div>}
           <div className="flex flex-wrap justify-end gap-2">
