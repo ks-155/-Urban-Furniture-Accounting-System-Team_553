@@ -100,91 +100,81 @@ export const Products = () => {
 
   if (view === 'form') {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSave} className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-8">
-          {/* Top Buttons matching wireframe */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex gap-4">
-              <button type="button" onClick={resetNew} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">New</button>
-              <button type="submit" disabled={saving} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">{saving ? 'Saving...' : 'Confirm'}</button>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-xl font-bold text-slate-900">Product Master Form View</h1>
+          <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
+        </div>
+        <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
+          {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{formError}</div>}
+          
+          {editing && (
+            <div className="flex justify-end mb-4">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${form.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                {form.status}
+              </span>
             </div>
-            <button type="button" onClick={() => setView('list')} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">Back</button>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Product Name</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Office Chair" className={input} required />
+            </div>
+            <div>
+              <label className={label}>SKU</label>
+              <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="e.g. CHR-001" className={input} />
+            </div>
           </div>
-          
-          <h1 className="text-2xl font-bold text-slate-800 mb-8 text-center" style={{ fontFamily: 'cursive', color: '#db2777' }}>Product Master Form View</h1>
-
-          {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium mb-6">{formError}</div>}
-          
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center">
-              <label className="w-1/3 text-xl font-medium text-pink-600" style={{ fontFamily: 'cursive' }}>Product Name</label>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="flex-1 border-b-2 border-pink-300 focus:border-pink-500 outline-none px-2 py-1 bg-transparent text-lg" required />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Product Type</label>
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={input}>
+                <option value="GOODS">Goods</option>
+                <option value="SERVICE">Service</option>
+                <option value="COMBO">Combo</option>
+              </select>
             </div>
-            <div className="flex items-center">
-              <label className="w-1/3 text-xl font-medium text-pink-600" style={{ fontFamily: 'cursive' }}>Product Type</label>
-              <div className="flex-1 relative">
-                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full border-b-2 border-pink-300 focus:border-pink-500 outline-none px-2 py-1 bg-transparent text-lg appearance-none cursor-pointer">
-                  <option value="GOODS">Goods</option>
-                  <option value="SERVICE">Service</option>
-                  <option value="COMBO">Combo</option>
-                </select>
-                <div className="absolute right-0 top-0 text-blue-500 text-sm pointer-events-none translate-x-full ml-4 whitespace-nowrap">
-                  Provide Drop down selection of<br/>Goods<br/>Service<br/>Combo
-                </div>
-              </div>
+            <div>
+              <label className={label}>Category</label>
+              <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="e.g. Office Furniture" className={input} />
             </div>
-            <div className="flex items-center">
-              <label className="w-1/3 text-xl font-medium text-pink-600" style={{ fontFamily: 'cursive' }}>Category</label>
-              <div className="flex-1 relative">
-                <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Selection" className="w-full border-b-2 border-pink-300 focus:border-pink-500 outline-none px-2 py-1 bg-transparent text-lg text-center" />
-                <div className="absolute right-0 top-0 text-orange-500 text-sm pointer-events-none translate-x-full ml-4 whitespace-nowrap pt-2">
-                  Category Can be created and saved on the fly<br/>(Many2one Field)
-                </div>
-              </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Sales Price (₹)</label>
+              <input type="number" min="0" step="0.01" value={form.salesPrice} onChange={(e) => setForm({ ...form, salesPrice: e.target.value })} placeholder="2000" className={input} required />
             </div>
-
-            <div className="flex items-end mt-8 gap-12">
-              <div className="w-48 h-48 border-2 border-pink-600 rounded-3xl flex items-center justify-center bg-white cursor-pointer hover:bg-slate-50">
-                <span className="text-pink-600 text-xl font-medium" style={{ fontFamily: 'cursive' }}>Upload<br/>Image</span>
-              </div>
-              
-              <div className="flex-1 space-y-8 mb-4">
-                <div className="flex items-center">
-                  <label className="w-1/3 text-xl font-medium text-pink-600" style={{ fontFamily: 'cursive' }}>Sales Price</label>
-                  <div className="flex-1 flex items-center border-b-2 border-pink-300">
-                    <span className="text-slate-500 px-2">Rs.</span>
-                    <input type="number" step="0.01" value={form.salesPrice} onChange={(e) => setForm({ ...form, salesPrice: e.target.value })} className="w-full focus:outline-none py-1 bg-transparent text-lg" required />
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <label className="w-1/3 text-xl font-medium text-pink-600" style={{ fontFamily: 'cursive' }}>Cost</label>
-                  <div className="flex-1 flex items-center border-b-2 border-pink-300">
-                    <span className="text-slate-500 px-2">Rs.</span>
-                    <input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} className="w-full focus:outline-none py-1 bg-transparent text-lg" required />
-                  </div>
-                </div>
-              </div>
+            <div>
+              <label className={label}>Cost (₹)</label>
+              <input type="number" min="0" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="1500" className={input} required />
             </div>
-            
-            {/* Keeping essential fields not in wireframe but required by backend */}
-            <div className="mt-8 pt-8 border-t border-slate-200">
-              <h3 className="text-sm font-bold text-slate-500 uppercase mb-4">Additional Inventory Settings</h3>
-              <div className="flex gap-8">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-700 mb-1">SKU</label>
-                  <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} className="w-full border-b-2 border-slate-300 px-2 py-1 outline-none" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Stock</label>
-                  <input type="number" value={form.stock} readOnly className="w-full border-b-2 border-slate-300 px-2 py-1 outline-none bg-slate-50 text-slate-500" />
-                </div>
-                <div className="flex items-end pb-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.status === 'ACTIVE'} onChange={(e) => setForm({ ...form, status: e.target.checked ? 'ACTIVE' : 'INACTIVE' })} className="w-5 h-5 accent-blue-600" />
-                    <span className="font-semibold text-slate-700">Active</span>
-                  </label>
-                </div>
-              </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Current Stock (Inventory)</label>
+              <input type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} disabled={editing !== null} className={`${input} ${editing ? 'bg-slate-50 text-slate-500' : ''}`} />
+              {editing && <p className="text-[10px] text-slate-400 mt-1">Stock is managed automatically via Vendor Bills (Goods Received) and Sales Orders.</p>}
+            </div>
+            <div>
+              <label className={label}>Status</label>
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={input}>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive / Archived</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-between items-center pt-2">
+            <div>
+              {editing && currentUser?.role === 'ADMIN' && (
+                 <button type="button" onClick={handleArchive} disabled={saving} className="px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-semibold flex items-center gap-1.5 transition">
+                   <Archive className="w-4 h-4" /> Archive / Delete
+                 </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
+              <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : 'Confirm'}</button>
             </div>
           </div>
         </form>
@@ -195,34 +185,33 @@ export const Products = () => {
   const filteredList = list.filter(p => statusFilter === 'ALL' || p.status === statusFilter);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6">
-        <h1 className="text-2xl font-bold text-slate-800 mb-6 text-center" style={{ fontFamily: 'cursive' }}>{listMode === 'list' ? 'Product Master List View' : 'Product Master Kanban View'}</h1>
-        
-        {/* Top bar matching wireframe */}
-        <div className="flex items-center justify-between mb-8 gap-4">
-          <button onClick={openNew} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">New</button>
-          
-          <div className="flex-1 max-w-xl">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="w-full px-4 py-2 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-blue-500" />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button onClick={() => {}} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">Back</button>
-            <ViewModeButtons value={listMode} onChange={setListMode} />
-          </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Product Master List</h1>
         </div>
-
-        <div className="mb-4">
-          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm">
-            <option value="">All Types</option>
-            <option value="GOODS">Goods</option>
-            <option value="SERVICE">Service</option>
-          </select>
+        <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, category or SKU…" className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
         </div>
-
-        {loading && <p className="text-sm text-slate-500">Loading...</p>}
-        {error && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm mb-4">{error}</div>}
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm">
+          <option value="">All types</option>
+          <option value="GOODS">Goods</option>
+          <option value="SERVICE">Service</option>
+          <option value="COMBO">Combo</option>
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm">
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active Only</option>
+          <option value="INACTIVE">Archived Only</option>
+        </select>
+        <ViewModeButtons value={listMode} onChange={setListMode} />
+      </div>
+      {loading && <p className="text-sm text-slate-500">Loading products…</p>}
+      {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
       {!loading && listMode === 'kanban' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredList.map((p) => (
@@ -238,27 +227,31 @@ export const Products = () => {
         </div>
       )}
       {!loading && listMode === 'list' && (
-        <div className="overflow-x-auto border-t-2 border-slate-200">
-          <table className="w-full text-sm text-left">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-slate-200 text-slate-800 font-medium text-lg" style={{ fontFamily: 'cursive' }}>
-                <th className="py-4 px-4 w-16 text-center">Select</th>
-                <th className="py-4 px-4 text-center">Product</th>
-                <th className="py-4 px-4 text-center">Category</th>
-                <th className="py-4 px-4 text-center">Type</th>
-                <th className="py-4 px-4 text-center">Sales Price</th>
-                <th className="py-4 px-4 text-center">Cost</th>
+              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                <th className="px-4 py-3">Product Name</th>
+                <th className="px-4 py-3 hidden sm:table-cell">SKU</th>
+                <th className="px-4 py-3 hidden sm:table-cell">Category</th>
+                <th className="px-4 py-3 hidden sm:table-cell">Type</th>
+                <th className="px-4 py-3">Sales Price</th>
+                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
               {filteredList.map((p) => (
-                <tr key={p.id} onClick={() => openRow(p)} className="border-b border-slate-200 hover:bg-slate-50 cursor-pointer text-center text-slate-700 font-medium text-base">
-                  <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}><input type="checkbox" className="w-5 h-5 accent-blue-600 rounded border-slate-300 cursor-pointer" /></td>
-                  <td className="py-4 px-4 font-semibold">{p.name}</td>
-                  <td className="py-4 px-4">{p.category || '—'}</td>
-                  <td className="py-4 px-4">{p.type}</td>
-                  <td className="py-4 px-4">{Number(p.salesPrice).toLocaleString('en-IN')}</td>
-                  <td className="py-4 px-4">{Number(p.costPrice).toLocaleString('en-IN')}</td>
+                <tr key={p.id} onClick={() => openRow(p)} className={`border-b border-slate-50 last:border-0 hover:bg-blue-50/40 cursor-pointer ${p.status === 'INACTIVE' ? 'bg-slate-50 opacity-60' : ''}`}>
+                  <td className="px-4 py-3 font-semibold text-slate-900">{p.name}</td>
+                  <td className="px-4 py-3 text-slate-500 text-xs font-mono hidden sm:table-cell">{p.sku || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600 hidden sm:table-cell">{p.category}</td>
+                  <td className="px-4 py-3 hidden sm:table-cell"><span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">{p.type}</span></td>
+                  <td className="px-4 py-3 font-semibold text-slate-900">{inr(p.salesPrice)}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-700">{p.type === 'GOODS' ? (p.stock ?? '0') : '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${p.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>{p.status}</span>
+                  </td>
                 </tr>
               ))}
               {filteredList.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No products found.</td></tr>}
