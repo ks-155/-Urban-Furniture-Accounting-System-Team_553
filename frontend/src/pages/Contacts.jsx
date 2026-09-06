@@ -68,54 +68,58 @@ export const Contacts = () => {
 
   if (view === 'form') {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-slate-900">{editing ? 'Contact Details' : 'Contact Master Form View'}</h1>
-          <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back</button>
-        </div>
-        <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-          {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">{formError}</div>}
-          <div>
-            <label className={label}>Contact Name</label>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Azure Furniture" className={input} required />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form onSubmit={handleSave} className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-8">
+          {/* Top Buttons matching wireframe */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex gap-4">
+              <button type="button" onClick={resetNew} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">New</button>
+              <button type="submit" disabled={saving} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">{saving ? 'Saving...' : 'Confirm'}</button>
+            </div>
+            <button type="button" onClick={() => setView('list')} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">Back</button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={label}>Type</label>
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={input}>
-                <option value="CUSTOMER">Customer</option>
-                <option value="VENDOR">Vendor</option>
-                <option value="BOTH">Both</option>
-              </select>
+          
+          <h1 className="text-2xl font-bold text-slate-800 mb-8 text-center" style={{ fontFamily: 'cursive' }}>Contact master Form View</h1>
+
+          {formError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium mb-6">{formError}</div>}
+          
+          <div className="flex flex-col md:flex-row gap-12">
+            {/* Left Side: Fields */}
+            <div className="flex-1 space-y-6">
+              <div className="flex items-center">
+                <label className="w-1/3 text-lg font-medium text-slate-800">Contact Name</label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="flex-1 border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent" required />
+              </div>
+              <div className="flex items-center">
+                <label className="w-1/3 text-lg font-medium text-slate-800">Email</label>
+                <div className="flex-1">
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Unique Email" className="w-full border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent placeholder:text-blue-400 placeholder:italic" />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <label className="w-1/3 text-lg font-medium text-slate-800">Phone</label>
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="flex-1 border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent" />
+              </div>
+              <div className="flex items-start">
+                <label className="w-1/3 text-lg font-medium text-slate-800 mt-2">Address</label>
+                <div className="flex-1 space-y-4">
+                  <input placeholder="Street" className="w-full border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent text-center placeholder:text-slate-400" />
+                  <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="City" className="w-full border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent text-center placeholder:text-slate-400" />
+                  <input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="State" className="w-full border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent text-center placeholder:text-slate-400" />
+                  <div className="flex gap-4">
+                    <input placeholder="Country" className="flex-1 border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent text-center placeholder:text-slate-400" />
+                    <input value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} placeholder="Pincode" className="flex-1 border-b-2 border-slate-300 focus:border-blue-500 outline-none px-2 py-1 bg-transparent text-center placeholder:text-slate-400" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className={label}>Email (Unique)</label>
-              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@company.com" className={input} />
+
+            {/* Right Side: Image Upload */}
+            <div className="w-64 flex flex-col items-center justify-center">
+              <div className="w-64 h-64 border-2 border-slate-800 rounded-3xl flex items-center justify-center bg-white cursor-pointer hover:bg-slate-50">
+                <span className="text-slate-800 text-xl font-medium" style={{ fontFamily: 'cursive' }}>Upload Image</span>
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={label}>Phone</label>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 ..." className={input} />
-            </div>
-            <div>
-              <label className={label}>City</label>
-              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={input} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={label}>State</label>
-              <input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className={input} />
-            </div>
-            <div>
-              <label className={label}>Pincode</label>
-              <input value={form.pincode} onChange={(e) => setForm({ ...form, pincode: e.target.value })} className={input} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={resetNew} className="px-5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">New</button>
-            <button type="submit" disabled={saving} className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold">{saving ? 'Saving…' : 'Confirm'}</button>
           </div>
         </form>
       </div>
@@ -123,29 +127,27 @@ export const Contacts = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Contact List</h1>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6">
+        <h1 className="text-2xl font-bold text-slate-800 mb-6 text-center" style={{ fontFamily: 'cursive' }}>{listMode === 'list' ? 'Contact List View' : 'Contact Kanban View'}</h1>
+        
+        {/* Top bar matching wireframe */}
+        <div className="flex items-center justify-between mb-8 gap-4">
+          <button onClick={openNew} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">New</button>
+          
+          <div className="flex-1 max-w-xl">
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="w-full px-4 py-2 border-2 border-slate-300 rounded-xl focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button onClick={() => {}} className="px-8 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-lg hover:bg-slate-200">Back</button>
+            <ViewModeButtons value={listMode} onChange={setListMode} />
+          </div>
         </div>
-        <button onClick={openNew} className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center gap-1.5"><Plus className="w-4 h-4" /> New</button>
-      </div>
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, phone…" className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
-        </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm">
-          <option value="">All types</option>
-          <option value="CUSTOMER">Customer</option>
-          <option value="VENDOR">Vendor</option>
-          <option value="BOTH">Both</option>
-        </select>
-        <ViewModeButtons value={listMode} onChange={setListMode} />
-        <button onClick={() => setView('list')} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50">Back</button>
-      </div>
-      {loading && <p className="text-sm text-slate-500">Loading contacts…</p>}
-      {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4">{error}</div>}
+
+        {loading && <p className="text-sm text-slate-500">Loading...</p>}
+        {error && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm mb-4">{error}</div>}
+
       {!loading && listMode === 'kanban' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {list.map((c) => (
@@ -160,28 +162,34 @@ export const Contacts = () => {
         </div>
       )}
       {!loading && listMode === 'list' && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto border-t-2 border-slate-200">
+          <table className="w-full text-sm text-left">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3 hidden sm:table-cell">Email</th>
-                <th className="px-4 py-3 hidden md:table-cell">Phone</th>
-                <th className="px-4 py-3 hidden md:table-cell">City</th>
+              <tr className="border-b-2 border-slate-200 text-slate-800 font-medium text-lg" style={{ fontFamily: 'cursive' }}>
+                <th className="py-4 px-4 w-16 text-center">Select</th>
+                <th className="py-4 px-4 w-20 text-center">Image</th>
+                <th className="py-4 px-4 text-center">Name</th>
+                <th className="py-4 px-4 text-center">Email</th>
+                <th className="py-4 px-4 text-center">Phone</th>
               </tr>
             </thead>
             <tbody>
               {list.map((c) => (
-                <tr key={c.id} onClick={() => openRow(c)} className="border-b border-slate-50 last:border-0 hover:bg-blue-50/40 cursor-pointer">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{c.name}</td>
-                  <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${c.type === 'VENDOR' ? 'bg-emerald-50 text-emerald-700' : c.type === 'BOTH' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>{c.type}</span></td>
-                  <td className="px-4 py-3 text-slate-600 hidden sm:table-cell">{c.email}</td>
-                  <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{phoneOf(c)}</td>
-                  <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{c.city || '—'}</td>
+                <tr key={c.id} onClick={() => openRow(c)} className="border-b border-slate-200 hover:bg-slate-50 cursor-pointer text-center text-slate-700 font-medium text-base">
+                  <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}><input type="checkbox" className="w-5 h-5 accent-blue-600 rounded border-slate-300 cursor-pointer" /></td>
+                  <td className="py-4 px-4 flex justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold border border-blue-200">{c.name.charAt(0).toUpperCase()}</div>
+                  </td>
+                  <td className="py-4 px-4">{c.name}</td>
+                  <td className="py-4 px-4">{c.email || '—'}</td>
+                  <td className="py-4 px-4">{phoneOf(c)}</td>
                 </tr>
               ))}
-              {list.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No contacts found.</td></tr>}
+              {list.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-slate-500 italic">No contacts found</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
