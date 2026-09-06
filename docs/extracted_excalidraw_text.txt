@@ -1,0 +1,1286 @@
+Create User
+---
+Name
+---
+Login id
+---
+E-mail id
+---
+Role
+---
+User
+---
+Administrator
+---
+Password
+---
+Re-Enter Password
+---
+Create
+---
+Cancel
+---
+Login Page
+---
+App LoGo
+---
+Login Id -
+---
+Password -
+---
+SIGN IN
+---
+Forgot Password | Sign Up
+---
+App LoGo
+---
+Login Id -
+---
+Password -
+---
+SIGN IN
+---
+Forgot Password | Sign Up
+---
+App LoGo
+---
+Enter Login Id -
+---
+Enter Email Id -
+---
+SIGN OUT
+---
+Forgot Password | Sign Up
+---
+Sign Up Page
+---
+Enter Password -
+---
+Re-Enter Password -
+---
+App LoGo
+---
+For create user page check creds as follows
+1. Login Id should be unique and must be between 6-12 characters
+2. Email should not be a duplicate in database
+3. Password must be unique and must contain a small case, a large case
+and a special character and must have more than 8 characters
+---
+Role 
+Admin - Have all access rights
+User - can only see his invoices/bills in paid/unpaid status and can directly pay his dues from portal
+Accountant - Create Master data, record Transactions and View reports.
+                Can manage customers/vendors, access accounting dashboard, create journal entries, 
+                Can create and manage invoices, bills, and payments
+---
+For Login Page
+- Check for Login Credentials
+- Match creds, and allow to login a user
+- If Creds does not match thrw an error msg, 
+  "Invalid Login Id or Password"
+- When clicked on SignUp, Land to SignUp page and only invoicing user will be create.
+- When Clicked on Forget Password click on Forget Password page
+---
+For Sign up Page,
+Create a 'invoicing user' database into the system on signup
+---
+Check creds as follows
+---
+1. login ID should be unique and must be in between 6-12 charachters.
+---
+2. Email Id should not be a duplicate in database
+---
+3.Password must me unique and must contain a small case, a large case and
+---
+a special character and length should be in more then 8 charachters.
+---
+For Sign up Page,
+---
+Ceate a 'invoicing user' database into the system on signup
+---
+Check creds as follows
+---
+1. login ID should be unique and must be in between 6-12 charachters.
+---
+2. Email Id should not be a duplicate in database
+---
+3.Password must me unique and must contain a small case, a large case and
+---
+a special character and length should be in more then 8 charachters.
+---
+For Sign up Page
+Create a "user" database into the system on signup
+Check creds as follows 
+1. Login Id Should be unique and must be in between 6-12 characters.
+2. Email Id should not be a duplicate in database
+3. password must be unique and must contain a small case, a large case 
+and a special character and length should be more than 8 characters
+---
+App Dashboard
+---
+Sales
+---
+Master Settings
+---
+Master Menu
+---
+Contact
+---
+Sales
+---
+Purchase
+---
+Sales
+---
+Purchase
+---
+Account
+---
+Purchase
+---
+Report
+---
+Budget Reports
+---
+Chart of Accounts
+---
+New
+---
+New
+---
+Report
+---
+All
+12
+---
+Confirmed
+     10
+---
+Draft
+  2
+---
+Confirmed
+     10
+---
+Draft
+  2
+---
+All
+12
+---
+Achieved
+    3
+---
+Budget
+    2
+---
+Committed
+     4
+---
+Sales
+---
+Purchase
+---
+Account
+---
+Report
+---
+Open on click
+---
+Sales order 
+Sale Invoice
+Receipt
+---
+Purchase Order
+Purchase Bill
+Payment
+---
+Contact
+Product
+Analyticals
+Analytical Budget
+Chart of Account
+Journals
+Journal Entries
+---
+Balancesheet
+Profit and Loss
+Budget Report
+---
+Master Data
+---
+All Master will have list view as default and clicking on           button it will open
+blank form view to enter new record,
+---
+Clicking on already saved record - it will open form view with saved details.
+---
+All Master will have list view as default and clicking on   New    button it will open blank form view to enter new record,
+Clicking on already saved record - it will open form view with saved details.
+---
+Contact master Form View
+---
+New
+---
+Confirm
+---
+Back
+---
+Contact Name
+---
+Upload Image
+---
+Phone
+---
+Address
+---
+Email
+---
+Unique Email
+---
+Street
+---
+City
+---
+State
+---
+Country
+---
+Pincode
+---
+Contact List View
+---
+Search
+---
+New
+---
+Back
+---
+Select
+---
+Image
+---
+Name
+---
+Email
+---
+Phone
+---
+Open Wood
+---
+Joey Wills
+---
+Openwood21@example.com
+---
+Joey.wills@example.com
+---
++91 9090090909
+---
++91 8080080808
+---
+Contact Kanban View
+---
+Allow user to shift to Kanban View
+---
+Allow User to shift to List View
+---
+Open Wood
+Openwood21@example.com
++91 9090090909
+---
+Joey Wills
+Joey.wills@example.com
++91 8080080808
+---
+Product Master Form View
+---
+Product Name
+---
+Category
+---
+Sales Price
+---
+Cost
+---
+Upload 
+Image
+---
+Selection
+---
+Rs. 100.00
+---
+Rs. 50.00
+---
+Category Can be created and saved on the fly
+(Many2one Field)
+---
+Product Type
+---
+Provide Drop down selection of 
+Goods 
+Service
+Combo
+---
+Analyticals Form View
+---
+Analytic Account
+---
+Type
+---
+Budget      Start Date     End Date      Comitted   Achieved
+---
+Selection
+---
+Selection
+---
+Selection
+---
+Select    Product         Category         Type      Sales Price      Cost
+---
+Create Kanban and List View in the same manner for Product, Analyticals
+---
+Air Conditioner
+---
+Refigerator
+---
+Electronics
+---
+Electronics
+---
+Goods
+---
+Goods
+---
+25,000
+---
+10000
+---
+15,000
+---
+7,000
+---
+Product Master List View
+---
+Product Master Kanban View
+---
+Budget
+---
+(Form View of Original Budget)
+---
+Budget Name
+---
+Budget Period
+---
+To
+---
+January 2026
+---
+Start Date
+---
+End Date
+---
+Analytic       Type        Committed Amount        Achieved Amount       Achieved %      Amount To
+                                                                                                              Achieve
+---
+Revised With
+---
+Revised Budget
+---
+Responsible
+---
+Furniture     Expense         200000                     10000                   5%              190000
+---
+Budget Name
+---
+Budget Period
+---
+To
+---
+January 2026
+---
+Start Date
+---
+End Date
+---
+Analytic       Type        Committed Amount        Achieved Amount       Achieved %      Amount To
+                                                                                                              Achieve
+---
+Revision Of
+---
+Original Budget
+---
+Responsible
+---
+Furniture     Expense         200000                     10000                   5%              190000
+---
+Budget (Revised)
+---
+(Original Budget Clickable link)
+---
+January 2026                01/01/2026                31/01/2026                200000                10000
+---
+Budget Report (List View)
+---
+New
+---
+Budget         Start Date       End Date          Status           Pie Chart
+---
+January 2026     01/01/2026     31/01/2026      Confirm
+---
+Achieved
+---
+Balance
+---
+Open Form View on Click
+---
+Air Conditioner
+---
+Image
+---
+Sales Price 25000
+Cost  15000
+---
+Image
+---
+Image
+---
+Refigerator
+---
+Sales Price  10000
+Cost   7000
+---
+Budget Report (Kanban View)
+---
+January 2026
+Start Date  01/01/2026
+End Date    31/01/2026
+---
+Open Form View on Click
+---
+Drop down selection
+Income 
+Expense
+---
+Menu & Stage Mapping
+---
+Menu
+---
+Stage
+---
+Output
+---
+Revise
+---
+Cancelled
+---
+Draft
+---
+Confirm
+---
+Revised
+---
+Cancelled
+---
+Here user can create a new fresh Budget
+---
+User confirm the newly created Budget
+---
+Only Visible at confirmed Stage
+---
+Here User can revise the new confirmed budget e.g. 
+Budgeted Expense was 2,00,000
+now you need to change the limit to 3,50,000
+---
+On Clicking Revise - New Budget will appear and Old 
+one will move to Revised state. Link will be visible on
+Main Budget and on click it will lead to new revised 
+Budget and the revised will have link to original.
+---
+Here User can archive the existing budget
+---
+New
+---
+Confirm
+---
+Cancel
+---
+Revise
+---
+Field Explaination
+---
+Budget Name
+---
+Budget Period
+---
+Analyticals
+---
+Revision of
+---
+Responsible
+---
+Type
+---
+Alpha Numeric  (In case of Revision Keep the original Budget name as it is and add the word "Revised" in last (For e.g. Project A Revised)
+---
+Date
+---
+Select from Contacts Created (open list of contacts created on click)
+---
+The Analytic Account name set in the Analytical account
+---
+Income/Expenses
+---
+Analyticals on All Invoice lines to be mapped with type = Income
+Analyticals on All Purchase Order/Vendor Bill Lines to be mapped with Type = Expenses
+---
+Committed Amount
+---
+Monetary Amount
+---
+Achieved Amount
+---
+Only Visible for Confirmed Budget, For Example
+---
+Analytic Name
+---
+Type
+---
+Lookup
+---
+Achieved Amount
+---
+Project 1
+---
+Income
+---
+Sales Invoice
+---
+21,000
+---
+Search Analytical in Sales Invoice with name Project 1,
+consider budget period and compute total and set in achieved amount
+---
+Project 1
+---
+Expense
+---
+Vendor Bills
+---
+21000
+---
+Search Analytical in Sales Invoice with name Project 1,
+---
+consider budget period and compute total and set in achieved amount
+---
+Search Analytical in Vendor Bills with name Project 1,
+consider budget period and compute total and set in achieved amount
+---
+Clicking on the Achieved Amount Button open list view of all Invoices/Bills having same analytical for the budget period
+---
+Achieved %
+---
+Only Visible for Confirmed Budget, Consider the following Formula:
+---
+(Achieved Amount/Committed Amount) * 100
+---
+Amount to 
+Achieve
+---
+Only Visible for Confirmed Budget, Consider the following Formula:
+---
+Committed Amount - (minus) Achieved Amount
+---
+All the Budget List where the Analytic Account is used
+---
+Data Input Forms
+---
+Purchase Order
+---
+New
+---
+Confirm
+---
+Back
+---
+PO No.
+---
+P00001
+---
+(Create Sequence auto generate PO number +1 of Last order)
+---
+Vendor Name
+---
+Mr Rahul
+---
+(From Contact Master - Many to one)
+---
+PO Date
+---
+Date
+---
+Payment Terms
+---
+30 Days (Can be created on
+---
+Create Bill
+---
+Sr. No.
+---
+Product
+---
+Budget Analytics
+---
+Qty
+---
+Unit Price
+---
+Total
+---
+1.
+---
+(From Product Master -
+Many to one)
+---
+(From Analytics Master - 
+Many to One)
+---
+Numeric
+---
+Monetary
+---
+Monetary
+---
+Vendor Bill
+---
+Vendor Bill No.
+---
+Vendor Name
+---
+Bill Reference
+---
+Status
+---
+Bill Date
+---
+Due Date
+---
+ABC-26-001
+---
+Alpha numeric (Text)
+---
+Date
+---
+Date
+---
+Bill/2026/0001
+---
+(auto generate Bill Number +1 of Last Bill)
+---
+Mr. Rahul
+---
+(from Contact master - Many to one)
+---
+only one at a time, computation given below
+---
+Cancel
+---
+Pay
+---
+Total
+---
+Unit Price * Quantity
+---
+2.
+---
+Table
+---
+Project 1
+---
+3
+---
+2000
+---
+6000
+---
+(3Qty * 2000)
+---
+6000
+---
+Budget
+---
+PO
+---
+Bill Created from PO fetch
+Vendor name, Product, Price, Quantity
+---
+On click open the PO from which Bill Created 
+(Only show this if bill created from PO
+hide if Bill Created Fresh without PO)
+---
+Sr. No.              Product              Chart of Account             Budget Analytics                      Qty        Unit Price      Total
+---
+Total
+---
+6000
+---
+Paid Via Cash
+Paid Via Bank
+Amount Due
+---
+6000
+---
+(Total - Amount Paid)
+---
+1.           Product Master -
+              Many to one
+---
+1.
+---
+Product Master - 
+Many to one
+---
+Analytics master -
+ Many to one
+---
+Numeric
+---
+Monetary
+---
+Monetary
+---
+2.
+---
+Table
+---
+Project 1                          3            2000          6000
+---
+On Click
+---
+Bill Payment
+---
+0
+---
+Clicking on PAY button from Bill
+---
+Provide option 
+1. Print
+2. Send
+---
+Confirm
+---
+Cancel
+---
+Payment Type
+---
+Send
+---
+Receive
+---
+Partner
+---
+Amount
+---
+Date
+---
+Payment Via
+---
+Note
+---
+Alpha Numeric (Text)
+---
+Mr Rahul
+---
+Autofill Partner Name from Invoice/Bill
+---
+6000
+---
+Autofill Amount Due from Invoice/Bill
+---
+(Default Today's Date)
+---
+Default set to Bank can be selected to Cash
+---
+(Allow user to send from Mail)
+---
+On Click 
+Open the Budget Analytic Report 
+that is used the Bill
+---
+Sales Order
+---
+SO No.
+---
+Customer Name
+---
+SO Date
+---
+Create Invoice
+---
+S00001
+---
+Mr. Rahul
+---
+(From Contact Master - Many to one)
+---
+Date
+---
+Customer Invoice No.
+---
+Customer Name
+---
+Invoice Reference
+---
+Status
+---
+Invoice Date
+---
+Due Date
+---
+ABC-26-001
+---
+Alpha numeric (Text)
+---
+Date
+---
+Date
+---
+INV/2026/0001
+---
+(auto generate Invoice Number +1 of Last Bill)
+---
+Mr. Rahul
+---
+(from Contact master - Many to one)
+---
+only one at a time, computation given below
+---
+Pay
+---
+Budget
+---
+SO
+---
+Sr. No.              Product                  Chart of Accounts          Budget Analytics        Qty        Unit Price         Total
+---
+Total
+---
+6000
+---
+Paid Via Cash
+Paid Via Bank
+Amount Due
+---
+6000
+---
+(Total - Amount Paid)
+---
+1.
+---
+Product Master - 
+Many to one
+---
+Analytics master -
+ Many to one
+---
+Numeric
+---
+Monetary
+---
+Monetary
+---
+2.
+---
+Table
+---
+Project 1                  3            2000          6000
+---
+0
+---
+On Click 
+Open the Budget Analytic Report 
+that is used the Bill
+---
+Customer Invoice
+---
+Invoice Created from SO fetch
+Customer Name, Product, Price, Quantity
+---
+On click open the PO from which Bill Created 
+(Only show this if bill created from PO
+hide if Bill Created Fresh without PO)
+---
+Clicking on PAY button on Invoice
+---
+Confirm
+---
+Cancel
+---
+Payment Type
+---
+Send
+---
+Receive
+---
+Partner
+---
+Amount
+---
+Date
+---
+Payment Via
+---
+Note
+---
+Alpha Numeric (Text)
+---
+Mr Rahul
+---
+Autofill Partner Name from Invoice/Bill
+---
+6000
+---
+Autofill Amount Due from Invoice/Bill
+---
+(Default Today's Date)
+---
+Default set to Bank can be selected to Cash
+---
+Provide Option 
+1. Print
+2. Send
+---
+Invoice Payment
+---
+Customer Invoice Portal View
+---
+Invoice            Invoice Date         Due Date         Amount Due           Status
+---
+(Contact can view only their own Invoices)
+---
+INV/2026/1213       11/08/2026        11/08/2026         100000 Rs.
+---
+Paid
+---
+INV/2026/1820      25/08/2026       25/08/2026         25000 Rs.
+---
+Pay Now
+---
+Urban Furnitures
+---
+Successful
+---
+On Successful status - Change the Status of Invoice from Pay Now to Paid
+---
+Password Reset
+---
+Log Out
+---
+Purchase
+---
+Purchase account to be set by default
+---
+As soon as the vendor bill is confirmed a journal entry would be created that would become visible in the Journal Entries section
+For Vendor bill always purchase chart of account would be set by default
+The Journal Entry should always be balanced 
+That is the debit and credit totals need to match
+---
+Demo Journal Entry
+---
+Sales
+---
+Sales account to be set by default
+---
+As soon as the Customer Invoice is confirmed a journal entry would be created that would become visible in the Journal Entries section
+For Customer Invoice always Sales chart of account would be set by default
+The Journal Entry should always be balanced 
+That is the debit and credit totals need to match
+---
+Journal Entries
+---
+Journals
+---
+Chart of Accounts (List View)
+---
+Account Name
+---
+Type
+---
+Provide drop down list to select from the following
+---
+Balancesheet
+---
+Asset 
+Liability
+Bank
+Capital 
+Cash
+---
+Profit and Loss
+---
+Income 
+Expenses
+Other Expenses
+---
+(Just for heading selection can be done from the orange part only)
+---
+All this accounts are to be pre configured
+---
+When clicking on new
+---
+(List View)
+---
+Back
+---
+New
+---
+Journal Name                 Type                     Default Account
+---
+Sales                             Sales                       Sales Income A/c
+---
+Purchase                       Purchase                  Purchase Expense A/c
+---
+Bank                             Bank                      Bank A/c
+---
+When Clicking on New
+---
+Journal Name
+---
+Journal Type
+---
+Default Account
+---
+Cash                             Cash                       Cash A/c
+---
+Name
+---
+Selection
+---
+Select from
+Sales
+Purchase 
+Bank 
+Cash
+---
+Selection
+---
+From Chart of Accounts Many to one
+---
+Journal Entries (List View)
+---
+New
+---
+Back
+---
+Date        Number          Partner          Journal         Total        Status
+---
+Sep 1       Bill/2026/0001       Mr. Rahul           Purchases        Rs. 30,000
+---
+Sep 2     Inv/2026/001       Mr Raj            Sales           Rs. 10,500
+---
+Pos
+ted
+---
+Posted
+---
+Draft
+---
+Post
+---
+Cancel
+---
+Back
+---
+Accounting Date
+---
+Journal
+---
+Date
+---
+Selection (From journals Many to one)
+---
+Account             Partner            Debit                 Credit
+---
+Asset A/c                     Rahul                   Rs. 10,000
+---
+Bank A/c                                                                           Rs. 10,000
+---
+Blocking warning if the debit and credit amount don't match
+---
+Field Explanation
+---
+Account -
+---
+Selection From Chart of Accounts (Many to one)
+---
+Partner -
+---
+Selection from contact master
+---
+When Clicking on new
+---
+Profit and Loss Report
+---
+2026
+---
+Print
+---
+Back
+---
+Pdf download on click
+---
+Balance
+---
+Income
+---
+Expense
+---
+Income from Sales
+---
+Expenses
+---
+Purchase Expense
+---
+Other Expense
+---
+Net Income
+---
+Rs. 10000
+---
+Rs. 10000
+---
+Rs. 7000
+---
+Rs. 6000
+---
+Rs. 1000
+---
+Rs. 3000
+---
+Field Computation
+---
+Income -
+---
+Total of Income
+---
+Income from Sales -
+---
+Total of account type Income
+---
+Expenses -
+---
+Total of All expenses
+---
+Purchase Expense -
+---
+Total of Account type Expense
+---
+Other Expense -
+---
+Total of account type Other Expense
+---
+Net Income -
+---
+Difference of Income - Expenses
+---
+Balance Sheet
+---
+Print
+---
+Back
+---
+2026
+---
+Assets
+---
+Liabilities
+---
+Bank
+---
+Debtors
+---
+Other Assets
+---
+Capital
+---
+Creditors
+---
+Other Liability
+---
+Total Asset
+---
+Total Liability
+---
+Capital A/c                                            Capital
+---
+Bank - Account type Asset - Bank 
+Cash - Account type Asset - cash  
+Debtors - Account type Asset - Debtors
+Creditors - Account type Liability - creditor 
+Capital - Account Type Capital
+---
+Cash
+---
+The Total of All asset and liability would always match
+---
+Demo Journal Entry
+---
+Pay
+---
+Reset to
+Draft
+---
+Back
+---
+Accounting Date
+---
+Journal
+---
+Date
+---
+Selection (From journals Many to one)
+---
+Purchase A/c                     Rahul                   Rs. 10,000
+---
+Creditor A/c                                                                     Rs. 10,000
+---
+Purchase
+---
+In case of bill journal would always be Purchase
+---
+Account             Partner            Debit                 Credit
+---
+(Bill date fetch from bill)
+---
+Demo Journal Entry Created through sales
+---
+Pay
+---
+Reset to
+Draft
+---
+Back
+---
+Accounting Date
+---
+Journal
+---
+Date
+---
+Debtor A/c                     Rahul                   Rs. 10,000
+---
+Sales A/c                                                                           Rs. 10,000
+---
+Sales
+---
+Account             Partner            Debit                 Credit
+---
+(Invoice date fetch from bill)
+---
+In case of Invoice journal would always be Sales
+---
+In case of bill journal would always be Purchase
+---
+Each account is assigned an Account Type, which
+would further be used for how the account to be
+treated and where it appears in reports.
+---
+The Transaction would be connected through Chart of Accounts

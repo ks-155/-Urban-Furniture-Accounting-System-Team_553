@@ -12,7 +12,20 @@ async function getAnalyticAccounts(req, res) {
             plannedAmount: true,
             committedAmount: true,
             status: true,
+            periodStart: true,
+            periodEnd: true,
           },
+        },
+        journalItems: {
+          select: {
+            id: true,
+            debit: true,
+            credit: true,
+            label: true,
+            account: { select: { code: true, name: true } },
+            entry: { select: { entryNumber: true, date: true, reference: true } },
+          },
+          take: 20,
         },
       },
       orderBy: { name: 'asc' },
@@ -51,6 +64,9 @@ async function createAnalyticAccount(req, res) {
       analyticAccount: analytic,
     });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Analytic account with this name already exists.' });
+    }
     console.error('createAnalyticAccount error:', error);
     return res.status(500).json({ error: 'Failed to create analytic account.' });
   }

@@ -14,9 +14,12 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
     );
   }
   if (!currentUser) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  // Role gate: USER (portal) is bounced back to / from any internal route
-  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
-    return <Navigate to="/" replace />;
+  // Role gate: unauthorized roles are bounced back to / from any internal route
+  if (allowedRoles) {
+    const normalized = allowedRoles.flatMap(r => (r === 'CUSTOMER' || r === 'USER') ? ['CUSTOMER', 'USER'] : [r]);
+    if (!normalized.includes(currentUser.role)) {
+      return <Navigate to="/" replace />;
+    }
   }
   return children;
 };

@@ -6,7 +6,12 @@ import { ArrowLeft } from 'lucide-react';
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const VendorBills = () => {
-  const { vendorBills, purchaseOrders, payments, confirmVendorBill, registerBillPayment } = useAccounting();
+  const { vendorBills, purchaseOrders, payments, confirmVendorBill, registerBillPayment, syncAllData } = useAccounting();
+
+  React.useEffect(() => {
+    if (syncAllData) syncAllData();
+  }, [syncAllData]);
+
   const [selectedId, setSelectedId] = useState(vendorBills[0]?.id || null);
   const [payOpen, setPayOpen] = useState(false);
   const [actionError, setActionError] = useState('');

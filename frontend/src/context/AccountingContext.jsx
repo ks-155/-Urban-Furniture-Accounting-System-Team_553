@@ -1,113 +1,31 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, getApiError, USE_MOCK_FALLBACK, purchasesAPI, billsAPI, journalEntriesAPI, journalsAPI, salesAPI, invoicesAPI } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  authAPI,
+  getApiError,
+  USE_MOCK_FALLBACK,
+  contactsAPI,
+  productsAPI,
+  accountsAPI,
+  journalsAPI,
+  budgetsAPI,
+  analyticsAPI,
+  purchasesAPI,
+  billsAPI,
+  journalEntriesAPI,
+  salesAPI,
+  invoicesAPI,
+  paymentsAPI,
+} from '../services/api';
 
 const AccountingContext = createContext();
-
-// Seed Chart of Accounts
-const initialAccounts = [
-  { id: 1, code: '1001', name: 'Cash on Hand', type: 'ASSET' },
-  { id: 2, code: '1002', name: 'Bank Account (HDFC)', type: 'ASSET' },
-  { id: 3, code: '1003', name: 'Debtors (Accounts Receivable)', type: 'ASSET' },
-  { id: 4, code: '2001', name: 'Creditors (Accounts Payable)', type: 'LIABILITY' },
-  { id: 5, code: '2002', name: 'Tax Payable (GST 18%)', type: 'LIABILITY' },
-  { id: 6, code: '3001', name: "Owner's Capital", type: 'CAPITAL' },
-  { id: 7, code: '4001', name: 'Sales Income', type: 'INCOME' },
-  { id: 8, code: '5001', name: 'Purchase Expense', type: 'EXPENSE' },
-];
-
-// Seed Contacts
-const initialContacts = [
-  {
-    id: 1,
-    name: 'Azure Furniture',
-    type: 'VENDOR',
-    email: 'contact@azurefurniture.com',
-    mobile: '+91 98200 11223',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    pincode: '400001',
-    address: '12 Industrial Area, Andheri East'
-  },
-  {
-    id: 2,
-    name: 'Nimesh Pathak',
-    type: 'CUSTOMER',
-    email: 'nimesh.pathak@gmail.com',
-    mobile: '+91 98765 43210',
-    city: 'Ahmedabad',
-    state: 'Gujarat',
-    pincode: '380015',
-    address: '404 Galaxy Towers, SG Highway'
-  },
-  {
-    id: 3,
-    name: 'Urban Timber Suppliers',
-    type: 'VENDOR',
-    email: 'timber@urbansupply.com',
-    mobile: '+91 99001 88776',
-    city: 'Surat',
-    state: 'Gujarat',
-    pincode: '395007',
-    address: 'Plot 78 GIDC Ring Road'
-  }
-];
-
-// Seed Products
-const initialProducts = [
-  { id: 1, name: 'Ergonomic Office Chair', type: 'GOODS', salesPrice: 5500, costPrice: 3800, category: 'Chairs' },
-  { id: 2, name: 'Solid Teak Wooden Table', type: 'GOODS', salesPrice: 18000, costPrice: 12500, category: 'Tables' },
-  { id: 3, name: '3-Seater Urban Fabric Sofa', type: 'GOODS', salesPrice: 32000, costPrice: 22000, category: 'Sofas' },
-  { id: 4, name: '6-Seater Dining Table Set', type: 'GOODS', salesPrice: 42000, costPrice: 29000, category: 'Dining' },
-];
-
-// Seed Journals
-const initialJournals = [
-  { id: 1, name: 'Sales Journal', code: 'SJ', type: 'SALES', defaultAccountId: 7 },
-  { id: 2, name: 'Purchase Journal', code: 'PJ', type: 'PURCHASE', defaultAccountId: 8 },
-  { id: 3, name: 'Bank Journal', code: 'BNK', type: 'BANK', defaultAccountId: 2 },
-  { id: 4, name: 'Cash Journal', code: 'CSH', type: 'CASH', defaultAccountId: 1 },
-];
-
-// Seed Budgets
-const initialBudgets = [
-  {
-    id: 1,
-    name: 'Q3 Furniture Manufacturing Budget',
-    analyticAccount: 'Manufacturing & Procurement',
-    periodStart: '2026-07-01',
-    periodEnd: '2026-09-30',
-    responsiblePerson: 'Rahul Sharma',
-    plannedAmount: 150000,
-    committedAmount: 45000,
-    achievedAmount: 38000,
-    status: 'CONFIRMED'
-  },
-  {
-    id: 2,
-    name: 'Office Store Expansion Project',
-    analyticAccount: 'Capital Projects',
-    periodStart: '2026-08-01',
-    periodEnd: '2026-12-31',
-    responsiblePerson: 'Priya Patel',
-    plannedAmount: 200000,
-    committedAmount: 85000,
-    achievedAmount: 62000,
-    status: 'CONFIRMED'
-  }
-];
 
 export const AccountingProvider = ({ children }) => {
   // Current active user / session (restored from localStorage when backend JWT exists)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('uf_user');
-      return saved ? JSON.parse(saved) : {
-        id: 1,
-        name: 'Alex Accountant',
-        loginId: 'accountant01',
-        email: 'alex@urbanfurniture.com',
-        role: 'ACCOUNTANT' // 'ADMIN' | 'ACCOUNTANT' | 'USER'
-      };
+      const savedToken = localStorage.getItem('uf_token');
+      return saved && savedToken ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
@@ -117,167 +35,24 @@ export const AccountingProvider = ({ children }) => {
   const [sessionRestored, setSessionRestored] = useState(false);
 
   const [users, setUsers] = useState([
-    { id: 1, name: 'Admin Master', loginId: 'admin01', email: 'admin@urbanfurniture.com', role: 'ADMIN', password: 'Password@123' },
-    { id: 2, name: 'Alex Accountant', loginId: 'accountant01', email: 'alex@urbanfurniture.com', role: 'ACCOUNTANT', password: 'Password@123' },
-    { id: 3, name: 'Nimesh Pathak', loginId: 'nimeshp', email: 'nimesh.pathak@gmail.com', role: 'USER', password: 'Password@123', contactId: 2 }
+    { id: 1, name: 'Admin Master', loginId: 'admin', email: 'admin@urbanfurniture.in', role: 'ADMIN', password: 'Admin@123' },
+    { id: 2, name: 'Alex Accountant', loginId: 'accountant01', email: 'alex@urbanfurniture.in', role: 'ACCOUNTANT', password: 'Password@123' },
+    { id: 3, name: 'Nimesh Pathak', loginId: 'nimeshp', email: 'nimesh@gmail.com', role: 'USER', password: 'Password@123' }
   ]);
 
-  const [contacts, setContacts] = useState(initialContacts);
-  const [products, setProducts] = useState(initialProducts);
-  const [accounts, setAccounts] = useState(initialAccounts);
-  const [journals] = useState(initialJournals);
-  const [budgets, setBudgets] = useState(initialBudgets);
+  const [contacts, setContacts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [journals, setJournals] = useState([]);
+  const [budgets, setBudgets] = useState([]);
 
-  // Operational State
-  const [purchaseOrders, setPurchaseOrders] = useState([
-    {
-      id: 1,
-      poNumber: 'PO0001',
-      vendorId: 1,
-      vendorName: 'Azure Furniture',
-      date: '2026-09-01',
-      status: 'CONFIRMED', // DRAFT | CONFIRMED | BILLED
-      totalAmount: 38000,
-      lines: [
-        { productId: 1, productName: 'Ergonomic Office Chair', quantity: 10, unitPrice: 3800, subtotal: 38000 }
-      ]
-    }
-  ]);
-
-  const [vendorBills, setVendorBills] = useState([
-    {
-      id: 1,
-      billNumber: 'BILL0001',
-      purchaseOrderId: 1,
-      vendorId: 1,
-      vendorName: 'Azure Furniture',
-      billDate: '2026-09-02',
-      dueDate: '2026-09-15',
-      status: 'PAID', // DRAFT | CONFIRMED | PAID
-      totalAmount: 38000,
-      paidAmount: 38000,
-      lines: [
-        { productId: 1, productName: 'Ergonomic Office Chair', quantity: 10, unitPrice: 3800, subtotal: 38000 }
-      ]
-    }
-  ]);
-
-  const [salesOrders, setSalesOrders] = useState([
-    {
-      id: 1,
-      soNumber: 'SO0001',
-      customerId: 2,
-      customerName: 'Nimesh Pathak',
-      date: '2026-09-03',
-      status: 'CONFIRMED', // DRAFT | CONFIRMED | INVOICED
-      totalAmount: 27500,
-      taxRate: 18,
-      taxAmount: 4190,
-      lines: [
-        { productId: 1, productName: 'Ergonomic Office Chair', quantity: 5, unitPrice: 5500, subtotal: 27500 }
-      ]
-    }
-  ]);
-
-  const [customerInvoices, setCustomerInvoices] = useState([
-    {
-      id: 1,
-      invNumber: 'INV0001',
-      salesOrderId: 1,
-      customerId: 2,
-      customerName: 'Nimesh Pathak',
-      invoiceDate: '2026-09-03',
-      dueDate: '2026-09-17',
-      status: 'PAID', // DRAFT | CONFIRMED | PAID
-      totalAmount: 31690, // with tax
-      paidAmount: 31690,
-      lines: [
-        { productId: 1, productName: 'Ergonomic Office Chair', quantity: 5, unitPrice: 5500, subtotal: 27500 }
-      ]
-    }
-  ]);
-
-  const [payments, setPayments] = useState([
-    {
-      id: 1,
-      paymentNumber: 'PAY0001',
-      paymentType: 'OUTBOUND',
-      partnerId: 1,
-      partnerName: 'Azure Furniture',
-      billId: 1,
-      billNumber: 'BILL0001',
-      amount: 38000,
-      paymentMethod: 'BANK',
-      date: '2026-09-03',
-      status: 'POSTED'
-    },
-    {
-      id: 2,
-      paymentNumber: 'PAY0002',
-      paymentType: 'INBOUND',
-      partnerId: 2,
-      partnerName: 'Nimesh Pathak',
-      invoiceId: 1,
-      invNumber: 'INV0001',
-      amount: 31690,
-      paymentMethod: 'BANK',
-      date: '2026-09-04',
-      status: 'POSTED'
-    }
-  ]);
-
-  // Initial balanced Journal Entries
-  const [journalEntries, setJournalEntries] = useState([
-    {
-      id: 1,
-      entryNumber: 'JE0001',
-      date: '2026-09-02',
-      reference: 'BILL0001 Confirm (Azure Furniture)',
-      journalName: 'Purchase Journal',
-      status: 'POSTED',
-      items: [
-        { accountCode: '5001', accountName: 'Purchase Expense', debit: 38000, credit: 0 },
-        { accountCode: '2001', accountName: 'Creditors (Azure Furniture)', debit: 0, credit: 38000 }
-      ]
-    },
-    {
-      id: 2,
-      entryNumber: 'JE0002',
-      date: '2026-09-03',
-      reference: 'Payment to Azure Furniture via Bank',
-      journalName: 'Bank Journal',
-      status: 'POSTED',
-      items: [
-        { accountCode: '2001', accountName: 'Creditors (Azure Furniture)', debit: 38000, credit: 0 },
-        { accountCode: '1002', accountName: 'Bank Account (HDFC)', debit: 0, credit: 38000 }
-      ]
-    },
-    {
-      id: 3,
-      entryNumber: 'JE0003',
-      date: '2026-09-03',
-      reference: 'INV0001 Confirm (Nimesh Pathak)',
-      journalName: 'Sales Journal',
-      status: 'POSTED',
-      items: [
-        { accountCode: '1003', accountName: 'Debtors (Nimesh Pathak)', debit: 31690, credit: 0 },
-        { accountCode: '4001', accountName: 'Sales Income', debit: 0, credit: 27500 },
-        { accountCode: '2002', accountName: 'Tax Payable (GST 18%)', debit: 0, credit: 4190 }
-      ]
-    },
-    {
-      id: 4,
-      entryNumber: 'JE0004',
-      date: '2026-09-04',
-      reference: 'Receipt from Nimesh Pathak via Bank',
-      journalName: 'Bank Journal',
-      status: 'POSTED',
-      items: [
-        { accountCode: '1002', accountName: 'Bank Account (HDFC)', debit: 31690, credit: 0 },
-        { accountCode: '1003', accountName: 'Debtors (Nimesh Pathak)', debit: 0, credit: 31690 }
-      ]
-    }
-  ]);
+  // Operational State - 100% Live from PostgreSQL backend
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [vendorBills, setVendorBills] = useState([]);
+  const [salesOrders, setSalesOrders] = useState([]);
+  const [customerInvoices, setCustomerInvoices] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [journalEntries, setJournalEntries] = useState([]);
 
   // Auth Functions — real API first (Phase 1 backend), mock fallback for offline demo
   const persistSession = (jwt, user) => {
@@ -291,32 +66,35 @@ export const AccountingProvider = ({ children }) => {
   useEffect(() => {
     const restore = async () => {
       const savedToken = localStorage.getItem('uf_token');
-      if (!savedToken) { setSessionRestored(true); return; }
-      try {
-        const res = await authAPI.me();
-        const user = res.data?.user || res.data;
-        if (user?.loginId) {
-          localStorage.setItem('uf_user', JSON.stringify(user));
-          setCurrentUser(user);
-          setToken(savedToken);
+      if (savedToken) {
+        try {
+          const res = await authAPI.me();
+          const user = res.data?.user || res.data;
+          if (user && user.loginId) {
+            localStorage.setItem('uf_user', JSON.stringify(user));
+            setCurrentUser(user);
+            setToken(savedToken);
+            syncAllData();
+          } else {
+            throw new Error('Invalid user payload');
+          }
+        } catch {
+          // Stale or invalid token: clear session
+          localStorage.removeItem('uf_token');
+          localStorage.removeItem('uf_user');
+          setToken(null);
+          setCurrentUser(null);
         }
-      } catch {
-        // Stale/invalid token: interceptor already cleared it; keep mock user for offline demo
-        if (!localStorage.getItem('uf_token')) setToken(null);
-      } finally {
-        setSessionRestored(true);
+      } else {
+        localStorage.removeItem('uf_token');
+        localStorage.removeItem('uf_user');
+        setToken(null);
+        setCurrentUser(null);
       }
+      setSessionRestored(true);
     };
     restore();
   }, []);
-
-  const mockLogin = (loginId, password) => {
-    const found = users.find(u => u.loginId.toLowerCase() === loginId.trim().toLowerCase() && u.password === password);
-    if (found) {
-      return { success: true, user: found, mock: true };
-    }
-    return { success: false, error: 'Invalid Login Id or Password' };
-  };
 
   const login = async (loginId, password) => {
     setAuthLoading(true);
@@ -324,23 +102,17 @@ export const AccountingProvider = ({ children }) => {
       const res = await authAPI.login(loginId?.trim(), password);
       const { token: jwt, user } = res.data || {};
       if (jwt && user) {
+        localStorage.removeItem('uf_logged_out');
         persistSession(jwt, user);
+        syncAllData();
         return { success: true, user };
       }
       return { success: false, error: 'Unexpected response from server.' };
     } catch (err) {
-      // Backend validation/401 → show exact message, don't fall back (would mask real errors)
       if (err?.response?.data?.error) {
         return { success: false, error: err.response.data.error };
       }
-      if (!USE_MOCK_FALLBACK) return { success: false, error: getApiError(err) };
-      const mockRes = mockLogin(loginId, password);
-      if (mockRes.success) {
-        // Offline demo: keep working without a JWT
-        setCurrentUser(mockRes.user);
-        return { ...mockRes, offline: true };
-      }
-      return mockRes.success ? mockRes : { success: false, error: `${mockRes.error} (backend unreachable)` };
+      return { success: false, error: getApiError(err) };
     } finally {
       setAuthLoading(false);
     }
@@ -398,20 +170,28 @@ export const AccountingProvider = ({ children }) => {
       if (err?.response?.data?.error) {
         return { success: false, error: err.response.data.error };
       }
-      if (!USE_MOCK_FALLBACK) return { success: false, error: getApiError(err) };
-      const mockRes = mockSignup(userData);
-      if (mockRes.success) setCurrentUser(mockRes.user);
-      return mockRes;
+      return { success: false, error: getApiError(err) };
     } finally {
       setAuthLoading(false);
     }
   };
 
   const logout = () => {
+    localStorage.removeItem('uf_logged_out');
     localStorage.removeItem('uf_token');
     localStorage.removeItem('uf_user');
     setToken(null);
     setCurrentUser(null);
+    setContacts([]);
+    setProducts([]);
+    setAccounts([]);
+    setBudgets([]);
+    setPurchaseOrders([]);
+    setVendorBills([]);
+    setSalesOrders([]);
+    setCustomerInvoices([]);
+    setPayments([]);
+    setJournalEntries([]);
   };
 
   // Admin offline fallback: add user to local mock store (no session change)
@@ -434,25 +214,61 @@ export const AccountingProvider = ({ children }) => {
     return `${prefix}${String(nextNum).padStart(4, '0')}`;
   };
 
-  // Master Data Adders
-  const addContact = (contact) => {
-    const newId = contacts.length + 1;
-    const newContact = { ...contact, id: newId };
-    setContacts(prev => [newContact, ...prev]);
-    return newContact;
+  // Master Data Adders & Live Persistence
+  const createContact = async (contact) => {
+    const res = await contactsAPI.create(contact);
+    await syncAllData();
+    return res.data?.contact;
   };
 
-  const addProduct = (product) => {
-    const newId = products.length + 1;
-    const newProduct = { ...product, id: newId };
-    setProducts(prev => [newProduct, ...prev]);
-    return newProduct;
+  const addContact = async (contact) => {
+    try {
+      const res = await contactsAPI.create(contact);
+      await syncAllData();
+      return res.data?.contact || contact;
+    } catch {
+      const newId = contacts.length + 1;
+      const newContact = { ...contact, id: newId };
+      setContacts(prev => [newContact, ...prev]);
+      return newContact;
+    }
   };
 
-  const addAccount = (account) => {
-    const newAccount = { ...account, id: accounts.length + 1 };
-    setAccounts(prev => [...prev, newAccount]);
-    return newAccount;
+  const createProduct = async (product) => {
+    const res = await productsAPI.create(product);
+    await syncAllData();
+    return res.data?.product;
+  };
+
+  const addProduct = async (product) => {
+    try {
+      const res = await productsAPI.create(product);
+      await syncAllData();
+      return res.data?.product || product;
+    } catch {
+      const newId = products.length + 1;
+      const newProduct = { ...product, id: newId };
+      setProducts(prev => [newProduct, ...prev]);
+      return newProduct;
+    }
+  };
+
+  const createAccount = async (account) => {
+    const res = await accountsAPI.create(account);
+    await syncAllData();
+    return res.data?.account;
+  };
+
+  const addAccount = async (account) => {
+    try {
+      const res = await accountsAPI.create(account);
+      await syncAllData();
+      return res.data?.account || account;
+    } catch {
+      const newAccount = { ...account, id: accounts.length + 1 };
+      setAccounts(prev => [...prev, newAccount]);
+      return newAccount;
+    }
   };
 
   // ---- Phase 3: live shapes (backend) normalized to the mock UI shape ----
@@ -546,14 +362,15 @@ export const AccountingProvider = ({ children }) => {
     paymentNumber: p.paymentNumber,
     paymentType: p.paymentType,
     partnerId: p.partnerId,
-    partnerName: '',
+    partnerName: p.partner?.name || '',
     billId: p.billId ?? null,
     invoiceId: p.invoiceId ?? null,
-    billNumber: '',
-    invNumber: '',
+    billNumber: p.bill?.billNumber || '',
+    invNumber: p.invoice?.invNumber || '',
     amount: num(p.amount),
-    paymentMethod: p.paymentMethod,
+    paymentMethod: p.paymentMethod || 'BANK',
     journalId: p.journalId,
+    journalName: p.journal?.name || '',
     date: day(p.date),
     status: p.status,
   });
@@ -576,34 +393,96 @@ export const AccountingProvider = ({ children }) => {
     })),
   });
 
-  // Pull live flow state (POs, bills, SOs, invoices for all roles; JEs staff-only).
-  // Returns true on success, false offline.
-  const syncPurchaseFlow = async () => {
+  // Pull ALL live state from PostgreSQL backend
+  const syncAllData = async () => {
+    const savedToken = localStorage.getItem('uf_token');
+    if (!savedToken) return false;
     try {
-      const [poRes, billRes, soRes, invRes] = await Promise.all([
-        purchasesAPI.list(), billsAPI.list(), salesAPI.list(), invoicesAPI.list(),
+      const [
+        contactsRes,
+        productsRes,
+        accountsRes,
+        journalsRes,
+        budgetsRes,
+        poRes,
+        billRes,
+        soRes,
+        invRes,
+        payRes,
+      ] = await Promise.all([
+        contactsAPI.list().catch(() => ({ data: { contacts: [] } })),
+        productsAPI.list().catch(() => ({ data: { products: [] } })),
+        accountsAPI.list().catch(() => ({ data: { accounts: [] } })),
+        journalsAPI.list().catch(() => ({ data: { journals: [] } })),
+        budgetsAPI.list().catch(() => ({ data: { budgets: [] } })),
+        purchasesAPI.list().catch(() => ({ data: { purchaseOrders: [] } })),
+        billsAPI.list().catch(() => ({ data: { bills: [] } })),
+        salesAPI.list().catch(() => ({ data: { salesOrders: [] } })),
+        invoicesAPI.list().catch(() => ({ data: { invoices: [] } })),
+        paymentsAPI.list().catch(() => ({ data: { payments: [] } })),
       ]);
+
+      if (contactsRes.data?.contacts?.length) {
+        setContacts(contactsRes.data.contacts);
+      }
+      if (productsRes.data?.products?.length) {
+        setProducts(productsRes.data.products);
+      }
+      if (accountsRes.data?.accounts?.length) {
+        setAccounts(accountsRes.data.accounts);
+      }
+      if (journalsRes.data?.journals?.length) {
+        setJournals(journalsRes.data.journals);
+      }
+      if (budgetsRes.data?.budgets?.length) {
+        setBudgets(budgetsRes.data.budgets);
+      }
+
       const livePOs = (poRes.data?.purchaseOrders || []).map(normPO);
       const liveBills = (billRes.data?.bills || []).map(normBill);
       const liveSOs = (soRes.data?.salesOrders || []).map(normSO);
       const liveInvs = (invRes.data?.invoices || []).map(normInv);
-      // Live payments arrive nested inside bills/invoices
-      const liveBillPays = [];
-      (billRes.data?.bills || []).forEach((b) => (b.payments || []).forEach((p) => liveBillPays.push({ ...normPayment(p), billId: b.id })));
-      const liveInvPays = [];
-      (invRes.data?.invoices || []).forEach((i) => (i.payments || []).forEach((p) => liveInvPays.push({ ...normPayment(p), invoiceId: i.id })));
+
       setPurchaseOrders(livePOs);
       setVendorBills(liveBills);
       setSalesOrders(liveSOs);
       setCustomerInvoices(liveInvs);
-      // Live is authoritative for payments once synced (both sides arrive nested)
-      if (liveBillPays.length || liveInvPays.length || liveFlow) {
+
+      if (payRes.data?.payments?.length) {
+        setPayments(payRes.data.payments.map(normPayment));
+      } else {
+        // Fallback to nested payments from bills and invoices
+        const liveBillPays = [];
+        (billRes.data?.bills || []).forEach((b) =>
+          (b.payments || []).forEach((p) =>
+            liveBillPays.push({
+              ...normPayment(p),
+              billId: b.id,
+              billNumber: b.billNumber,
+              partnerName: b.vendor?.name || '',
+            })
+          )
+        );
+        const liveInvPays = [];
+        (invRes.data?.invoices || []).forEach((i) =>
+          (i.payments || []).forEach((p) =>
+            liveInvPays.push({
+              ...normPayment(p),
+              invoiceId: i.id,
+              invNumber: i.invNumber,
+              partnerName: i.customer?.name || '',
+            })
+          )
+        );
         setPayments([...liveBillPays, ...liveInvPays]);
       }
+
       // Journal entries are staff-only (USER gets 403) — sync separately
       try {
         const jeRes = await journalEntriesAPI.list();
-        setJournalEntries((jeRes.data?.journalEntries || []).map(normJE));
+        if (jeRes.data?.journalEntries) {
+          setJournalEntries(jeRes.data.journalEntries.map(normJE));
+        }
       } catch {
         /* portal roles keep existing entries */
       }
@@ -615,12 +494,14 @@ export const AccountingProvider = ({ children }) => {
     }
   };
 
+  const syncPurchaseFlow = syncAllData;
+
   // Sync once a session exists (reads are role-filtered server-side)
   useEffect(() => {
     if (token && currentUser) {
-      syncPurchaseFlow();
+      syncAllData();
     }
-  }, [token]);
+  }, [token, currentUser]);
 
   // ---- Workflow: Purchase (live-first, mock fallback) ----
   const createPurchaseOrder = async (vendorId, lines, extra = {}) => {
@@ -841,6 +722,15 @@ export const AccountingProvider = ({ children }) => {
     }
   };
 
+  const cancelSalesOrder = async (soId) => {
+    try {
+      await salesAPI.cancel(soId);
+      await syncPurchaseFlow();
+    } catch (err) {
+      throw new Error(err?.response?.data?.error || getApiError(err) || 'Cancel failed.');
+    }
+  };
+
   const createInvoiceFromSO = async (soId) => {
     try {
       const res = await salesAPI.createInvoice(soId);
@@ -1041,10 +931,13 @@ export const AccountingProvider = ({ children }) => {
       logout,
       contacts,
       addContact,
+      createContact,
       products,
       addProduct,
+      createProduct,
       accounts,
       addAccount,
+      createAccount,
       journals,
       budgets,
       purchaseOrders,
@@ -1058,6 +951,7 @@ export const AccountingProvider = ({ children }) => {
       salesOrders,
       createSalesOrder,
       confirmSalesOrder,
+      cancelSalesOrder,
       createInvoiceFromSO,
       customerInvoices,
       confirmCustomerInvoice,
@@ -1066,7 +960,9 @@ export const AccountingProvider = ({ children }) => {
       journalEntries,
       createJournalEntry,
       liveFlow,
-      syncPurchaseFlow
+      syncPurchaseFlow,
+      syncAllData,
+      refreshAllData: syncAllData,
     }}>{children}</AccountingContext.Provider>
   );
 };

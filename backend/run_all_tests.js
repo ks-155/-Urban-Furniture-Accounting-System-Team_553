@@ -16,6 +16,7 @@ const testSuites = [
   'test_payments.js',
   'test_phase5_reports.js',
   'test_customer_self_order_flow.js',
+  'test_sales_invoice_payment_flow.js',
 ];
 
 console.log('====================================================');

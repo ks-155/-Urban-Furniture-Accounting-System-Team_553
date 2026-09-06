@@ -20,11 +20,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// On 401/403, clear stale session so ProtectedRoute redirects to /login
+// On 401 Unauthorized (token invalid/expired), clear stale session so ProtectedRoute redirects to /login
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+    if (err.response && err.response.status === 401) {
       const url = err.config?.url || '';
       // Don't wipe session on the login/signup call itself — the form shows the error
       if (!url.includes('/auth/login') && !url.includes('/auth/signup')) {
@@ -118,6 +118,7 @@ export const salesAPI = {
   get: (id) => api.get(`/sales/${id}`),
   create: (payload) => api.post('/sales', payload),
   confirm: (id) => api.post(`/sales/${id}/confirm`),
+  cancel: (id) => api.post(`/sales/${id}/cancel`),
   createInvoice: (id) => api.post(`/sales/${id}/create-invoice`),
 };
 

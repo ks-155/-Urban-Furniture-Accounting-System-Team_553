@@ -65,13 +65,13 @@ async function runTests() {
     const authHeaders = { Authorization: `Bearer ${token}` };
 
     // 1. List Contacts
-    const contactsRes = await request('GET', '/api/contacts');
+    const contactsRes = await request('GET', '/api/contacts', null, authHeaders);
     console.assert(contactsRes.status === 200, 'List contacts failed');
     console.assert(Array.isArray(contactsRes.body.contacts), 'Contacts should be array');
     console.log(`✅ 1. List contacts returned ${contactsRes.body.contacts.length} records.`);
 
     // 2. Filter Contacts by VENDOR
-    const vendorsRes = await request('GET', '/api/contacts?type=VENDOR');
+    const vendorsRes = await request('GET', '/api/contacts?type=VENDOR', null, authHeaders);
     console.assert(vendorsRes.status === 200, 'Filter vendors failed');
     console.assert(vendorsRes.body.contacts.every((c) => c.type === 'VENDOR'), 'Vendor filter failed');
     console.log('✅ 2. Filter contacts by VENDOR works properly.');
@@ -110,7 +110,7 @@ async function runTests() {
     console.log('✅ 4. Update contact succeeded.');
 
     // 5. List Products
-    const productsRes = await request('GET', '/api/products');
+    const productsRes = await request('GET', '/api/products', null, authHeaders);
     console.assert(productsRes.status === 200, 'List products failed');
     console.assert(Array.isArray(productsRes.body.products), 'Products should be array');
     console.log(`✅ 5. List products returned ${productsRes.body.products.length} products.`);
@@ -146,7 +146,7 @@ async function runTests() {
     console.log('✅ 7. Update product price succeeded.');
 
     // 8. List Chart of Accounts (with live balance check)
-    const accountsRes = await request('GET', '/api/accounts');
+    const accountsRes = await request('GET', '/api/accounts', null, authHeaders);
     console.assert(accountsRes.status === 200, 'List accounts failed');
     console.assert(accountsRes.body.accounts.length >= 8, 'CoA should have at least 8 default accounts');
     console.log(`✅ 8. Chart of Accounts listed ${accountsRes.body.accounts.length} accounts with computed balances.`);
@@ -167,7 +167,7 @@ async function runTests() {
     console.log(`✅ 9. Create Account 5${accSuffix} succeeded:`, newAccRes.body.account.name);
 
     // 10. List Journals
-    const journalsRes = await request('GET', '/api/journals');
+    const journalsRes = await request('GET', '/api/journals', null, authHeaders);
     console.assert(journalsRes.status === 200, 'List journals failed');
     console.assert(journalsRes.body.journals.length >= 4, 'Should have at least 4 default journals');
     console.assert(journalsRes.body.journals[0].defaultAccount !== undefined, 'Journal defaultAccount missing');
@@ -189,7 +189,7 @@ async function runTests() {
     console.log(`✅ 11. Create Journal PC${accSuffix} succeeded:`, newJournalRes.body.journal.name);
 
     // 12. List Analytic Accounts
-    const analyticRes = await request('GET', '/api/analytic-accounts');
+    const analyticRes = await request('GET', '/api/analytic-accounts', null, authHeaders);
     console.assert(analyticRes.status === 200, 'List analytic accounts failed');
     console.assert(analyticRes.body.analyticAccounts.length >= 1, 'Should have at least 1 analytic account');
     console.log(`✅ 12. Analytic accounts listed ${analyticRes.body.analyticAccounts.length} records.`);
@@ -206,6 +206,14 @@ async function runTests() {
     );
     console.assert(newAnalyticRes.status === 201, 'Create analytic account failed');
     console.log('✅ 13. Create Analytic Account succeeded:', newAnalyticRes.body.analyticAccount.name);
+
+    // Cleanup created test records so tests don't leave permanent duplicates
+    const prisma = require('./src/prisma');
+    await prisma.analyticAccount.delete({ where: { id: newAnalyticRes.body.analyticAccount.id } }).catch(() => {});
+    await prisma.journal.delete({ where: { id: newJournalRes.body.journal.id } }).catch(() => {});
+    await prisma.account.delete({ where: { id: newAccRes.body.account.id } }).catch(() => {});
+    await prisma.product.delete({ where: { id: createdProdId } }).catch(() => {});
+    await prisma.contact.delete({ where: { id: createdContactId } }).catch(() => {});
 
     console.log('\n🎉 ALL 13 PHASE 2 MASTER DATA TESTS PASSED PERFECTLY!');
   } catch (err) {

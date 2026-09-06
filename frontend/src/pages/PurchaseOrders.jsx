@@ -8,7 +8,12 @@ import { ArrowLeft, Plus, Search } from 'lucide-react';
 const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const PurchaseOrders = () => {
-  const { purchaseOrders, contacts: mockContacts, products: mockProducts, createPurchaseOrder, confirmPurchaseOrder, createBillFromPO, vendorBills } = useAccounting();
+  const { purchaseOrders, contacts: mockContacts, products: mockProducts, createPurchaseOrder, confirmPurchaseOrder, createBillFromPO, vendorBills, syncAllData } = useAccounting();
+
+  React.useEffect(() => {
+    if (syncAllData) syncAllData();
+  }, [syncAllData]);
+
   const contactsFetcher = useCallback(() => contactsAPI.list(), []);
   const { data: liveContacts } = useLiveList(contactsFetcher, 'contacts', mockContacts);
   const productsFetcher = useCallback(() => productsAPI.list(), []);

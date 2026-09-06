@@ -27,7 +27,8 @@ async function getPurchaseOrders(req, res) {
     if (status) where.status = status.toUpperCase();
 
     // Role-based security: if logged in as portal USER (Vendor), only return their own POs!
-    if (req.user && req.user.role === 'USER') {
+    // Role-based security: Portal Vendor can only view their own Purchase Orders
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
       if (!req.user.contactId) {
         return res.status(200).json({ purchaseOrders: [] });
       }
@@ -75,8 +76,10 @@ async function getPurchaseOrderById(req, res) {
     }
 
     // Role-based protection
-    if (req.user && req.user.role === 'USER' && req.user.contactId && po.vendorId !== req.user.contactId) {
-      return res.status(403).json({ error: 'Access denied: You can only view your own Purchase Orders.' });
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
+      if (!req.user.contactId || po.vendorId !== req.user.contactId) {
+        return res.status(403).json({ error: 'Access denied: You can only view your own Purchase Orders.' });
+      }
     }
 
     return res.status(200).json({ purchaseOrder: po });
@@ -102,6 +105,16 @@ async function createPurchaseOrder(req, res) {
       return res.status(404).json({ error: 'Vendor not found.' });
     }
 
+    // Reject inactive vendor
+    if (vendor.status === 'INACTIVE') {
+      return res.status(400).json({ error: `Vendor '${vendor.name}' is inactive and cannot be used for new orders.` });
+    }
+
+    // Reject if contact is not a vendor or both
+    if (vendor.type !== 'VENDOR' && vendor.type !== 'BOTH') {
+      return res.status(400).json({ error: `Contact '${vendor.name}' is not a Vendor.` });
+    }
+
     if (!Array.isArray(lines) || lines.length === 0) {
       return res.status(400).json({ error: 'At least one product line is required.' });
     }
@@ -120,6 +133,15 @@ async function createPurchaseOrder(req, res) {
 
       if (isNaN(price) || price < 0) {
         return res.status(400).json({ error: 'Unit price cannot be negative.' });
+      }
+
+      // Check product exists and is active
+      const product = await prisma.product.findUnique({ where: { id: pId } });
+      if (!product) {
+        return res.status(404).json({ error: `Product ID ${pId} not found.` });
+      }
+      if (product.status === 'INACTIVE') {
+        return res.status(400).json({ error: `Product '${product.name}' is inactive and cannot be ordered.` });
       }
 
       const subtotal = qty * price;
@@ -161,6 +183,7 @@ async function createPurchaseOrder(req, res) {
     return res.status(500).json({ error: 'Failed to create purchase order.' });
   }
 }
+
 
 // POST /api/purchases/:id/confirm (Confirm PO by Accountant)
 async function confirmPurchaseOrder(req, res) {

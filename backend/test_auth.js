@@ -172,7 +172,57 @@ async function runTests() {
     console.assert(forbiddenRes.status === 403, 'Normal user should not be able to create users');
     console.log('✅ 10. Access control verified: Normal user blocked (403 Forbidden)');
 
-    console.log('\n🎉 ALL 10 PHASE 1 TESTS PASSED PERFECTLY!');
+    // 11. Unauthenticated requests to protected endpoints return 401
+    const unauthAccounts = await request('GET', '/api/accounts');
+    console.assert(unauthAccounts.status === 401, 'Unauthenticated /api/accounts should return 401');
+    const unauthContacts = await request('GET', '/api/contacts');
+    console.assert(unauthContacts.status === 401, 'Unauthenticated /api/contacts should return 401');
+    const unauthProducts = await request('GET', '/api/products');
+    console.assert(unauthProducts.status === 401, 'Unauthenticated /api/products should return 401');
+    const unauthReports = await request('GET', '/api/reports/balance-sheet');
+    console.assert(unauthReports.status === 401, 'Unauthenticated /api/reports/balance-sheet should return 401');
+    console.log('✅ 11. Unauthenticated requests blocked with 401 on all protected routes');
+
+    // 12. Customer token to Chart of Accounts -> 403 Forbidden
+    const custAccounts = await request('GET', '/api/accounts', null, { Authorization: `Bearer ${userToken}` });
+    console.assert(custAccounts.status === 403, 'Customer should not be able to access Chart of Accounts');
+    console.log('✅ 12. RBAC verified: Customer blocked from /api/accounts (403 Forbidden)');
+
+    // 13. Customer token to Budgets -> 403 Forbidden
+    const custBudgets = await request('GET', '/api/budgets', null, { Authorization: `Bearer ${userToken}` });
+    console.assert(custBudgets.status === 403, 'Customer should not be able to access Budgets');
+    console.log('✅ 13. RBAC verified: Customer blocked from /api/budgets (403 Forbidden)');
+
+    // 14. Customer token to Balance Sheet -> 403 Forbidden
+    const custReports = await request('GET', '/api/reports/balance-sheet', null, { Authorization: `Bearer ${userToken}` });
+    console.assert(custReports.status === 403, 'Customer should not be able to access Reports');
+    console.log('✅ 14. RBAC verified: Customer blocked from /api/reports (403 Forbidden)');
+
+    // 15. Customer token attempting to create a product -> 403 Forbidden
+    const custCreateProd = await request(
+      'POST',
+      '/api/products',
+      { name: 'Hacked Chair', salesPrice: 100, costPrice: 50 },
+      { Authorization: `Bearer ${userToken}` }
+    );
+    console.assert(custCreateProd.status === 403, 'Customer should not be able to create products');
+    console.log('✅ 15. RBAC verified: Customer blocked from product creation (403 Forbidden)');
+
+    // Self-cleanup
+    const prisma = require('./src/prisma');
+    if (createUserRes.body?.user?.id) {
+      await prisma.user.delete({ where: { id: createUserRes.body.user.id } }).catch(() => {});
+    }
+    if (validSignup.body?.user?.id) {
+      const u = await prisma.user.findUnique({ where: { id: validSignup.body.user.id } });
+      await prisma.user.delete({ where: { id: validSignup.body.user.id } }).catch(() => {});
+      if (u?.contactId) {
+        await prisma.contact.delete({ where: { id: u.contactId } }).catch(() => {});
+      }
+    }
+    await prisma.$disconnect();
+
+    console.log('\n🎉 ALL 15 AUTH & RBAC SECURITY TESTS PASSED PERFECTLY!');
   } catch (err) {
     console.error('❌ Test failed:', err);
     process.exit(1);

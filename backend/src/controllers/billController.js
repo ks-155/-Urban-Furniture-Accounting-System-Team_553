@@ -78,6 +78,13 @@ async function getBillById(req, res) {
       return res.status(404).json({ error: 'Vendor bill not found.' });
     }
 
+    // Role-based scoping: portal users can only view their own bills
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
+      if (!req.user.contactId || bill.vendorId !== req.user.contactId) {
+        return res.status(403).json({ error: 'Access denied to this vendor bill.' });
+      }
+    }
+
     return res.status(200).json({ bill });
   } catch (error) {
     console.error('getBillById error:', error);
@@ -268,25 +275,39 @@ async function payBill(req, res) {
       return res.status(400).json({ error: 'Cannot pay a draft bill. Please confirm it first.' });
     }
 
+    if (bill.status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Cannot pay a cancelled bill.' });
+    }
+
     if (bill.status === 'PAID') {
       return res.status(400).json({ error: 'This bill is already fully paid.' });
     }
 
-    const payAmount = amount ? parseFloat(amount) : (parseFloat(bill.totalAmount) - parseFloat(bill.paidAmount));
+    const remainingDue = parseFloat(bill.totalAmount) - parseFloat(bill.paidAmount);
+
+    if (remainingDue <= 0.005) {
+      return res.status(400).json({ error: 'This bill is already fully paid.' });
+    }
+
+    const payAmount = amount ? parseFloat(amount) : remainingDue;
 
     if (isNaN(payAmount) || payAmount <= 0) {
       return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
     }
 
-    const remainingDue = parseFloat(bill.totalAmount) - parseFloat(bill.paidAmount);
-    if (payAmount > remainingDue + 0.01) {
+    // Strict overpayment prevention
+    if (payAmount > remainingDue + 0.005) {
       return res.status(400).json({
-        error: `Payment amount (${payAmount}) exceeds remaining due amount (${remainingDue}).`,
+        error: `Payment amount (₹${payAmount.toFixed(2)}) exceeds remaining due (₹${remainingDue.toFixed(2)}). Overpayment is not allowed.`,
       });
     }
 
     // Determine payment method and journal: BANK or CASH
     const method = (paymentMethod || 'BANK').toUpperCase();
+    if (!['BANK', 'CASH'].includes(method)) {
+      return res.status(400).json({ error: 'Payment method must be BANK or CASH.' });
+    }
+
     let targetJournal;
     if (journalId) {
       targetJournal = await prisma.journal.findUnique({
@@ -359,13 +380,14 @@ async function payBill(req, res) {
 
     // 3. Update Bill Paid Amount & Status
     const newPaidTotal = parseFloat(bill.paidAmount) + payAmount;
-    const isFullyPaid = newPaidTotal >= (parseFloat(bill.totalAmount) - 0.01);
+    const isFullyPaid = newPaidTotal >= (parseFloat(bill.totalAmount) - 0.005);
+    const newStatus = isFullyPaid ? 'PAID' : 'PARTIALLY_PAID';
 
     const updatedBill = await prisma.vendorBill.update({
       where: { id: bill.id },
       data: {
         paidAmount: newPaidTotal,
-        status: isFullyPaid ? 'PAID' : bill.status,
+        status: newStatus,
       },
       include: {
         vendor: true,
@@ -385,6 +407,7 @@ async function payBill(req, res) {
     return res.status(500).json({ error: 'Failed to record bill payment.' });
   }
 }
+
 
 module.exports = {
   getBills,

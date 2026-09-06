@@ -65,11 +65,11 @@ async function runTests() {
     const authHeaders = { Authorization: `Bearer ${token}` };
 
     // 1. Get Azure Furniture (Vendor) and a Product
-    const contactsRes = await request('GET', '/api/contacts?type=VENDOR');
+    const contactsRes = await request('GET', '/api/contacts?type=VENDOR', null, authHeaders);
     const vendor = contactsRes.body.contacts.find((c) => c.name.includes('Azure')) || contactsRes.body.contacts[0];
     console.assert(vendor !== undefined, 'No vendor found');
 
-    const productsRes = await request('GET', '/api/products');
+    const productsRes = await request('GET', '/api/products', null, authHeaders);
     const product = productsRes.body.products[0];
     console.assert(product !== undefined, 'No product found');
 

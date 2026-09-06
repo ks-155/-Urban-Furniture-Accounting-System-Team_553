@@ -321,7 +321,7 @@ async function payInvoice(req, res) {
   try {
     const { id } = req.params;
     const invoiceId = parseInt(id, 10);
-    const { amount, paymentMethod, journalId } = req.body;
+    const { amount, paymentMethod, journalId, note, date } = req.body;
 
     const invoice = await prisma.customerInvoice.findUnique({
       where: { id: invoiceId },
@@ -341,25 +341,39 @@ async function payInvoice(req, res) {
       return res.status(400).json({ error: 'Cannot pay a draft invoice. Please confirm it first.' });
     }
 
+    if (invoice.status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Cannot pay a cancelled invoice.' });
+    }
+
     if (invoice.status === 'PAID') {
       return res.status(400).json({ error: 'This invoice is already fully paid.' });
     }
 
-    const payAmount = amount ? parseFloat(amount) : (parseFloat(invoice.totalAmount) - parseFloat(invoice.paidAmount));
+    const remainingDue = parseFloat(invoice.totalAmount) - parseFloat(invoice.paidAmount);
+
+    if (remainingDue <= 0.005) {
+      return res.status(400).json({ error: 'This invoice is already fully paid.' });
+    }
+
+    const payAmount = amount ? parseFloat(amount) : remainingDue;
 
     if (isNaN(payAmount) || payAmount <= 0) {
       return res.status(400).json({ error: 'Payment amount must be greater than zero.' });
     }
 
-    const remainingDue = parseFloat(invoice.totalAmount) - parseFloat(invoice.paidAmount);
-    if (payAmount > remainingDue + 0.01) {
+    // Strict overpayment prevention
+    if (payAmount > remainingDue + 0.005) {
       return res.status(400).json({
-        error: `Payment amount (${payAmount}) exceeds remaining due amount (${remainingDue}).`,
+        error: `Payment amount (₹${payAmount.toFixed(2)}) exceeds remaining due (₹${remainingDue.toFixed(2)}). Overpayment is not allowed.`,
       });
     }
 
     // Determine payment method and journal: BANK or CASH
     const method = (paymentMethod || 'BANK').toUpperCase();
+    if (!['BANK', 'CASH'].includes(method)) {
+      return res.status(400).json({ error: 'Payment method must be BANK or CASH.' });
+    }
+
     let targetJournal;
     if (journalId) {
       targetJournal = await prisma.journal.findUnique({
@@ -391,14 +405,14 @@ async function payInvoice(req, res) {
 
     const entryNumber = await getNextJENumber();
     const paymentNumber = await getNextPayNumber();
-    const today = new Date();
+    const paymentDate = date ? new Date(date) : new Date();
 
     // 1. Create Double-Entry Payment Journal Entry
     const paymentJE = await prisma.journalEntry.create({
       data: {
         entryNumber,
-        date: today,
-        reference: `Receipt: ${invoice.invNumber} (${invoice.customer.name})`,
+        date: paymentDate,
+        reference: note ? `Receipt: ${invoice.invNumber} (${note})` : `Receipt: ${invoice.invNumber} (${invoice.customer.name})`,
         journalId: targetJournal.id,
         status: 'POSTED',
         items: {
@@ -408,7 +422,7 @@ async function payInvoice(req, res) {
               partnerId: invoice.customerId,
               debit: payAmount,
               credit: 0,
-              label: `Customer Payment Received - ${invoice.invNumber}`,
+              label: `Customer Payment Received - ${invoice.invNumber}${note ? ` (${note})` : ''}`,
             },
             {
               accountId: debtorsAccount.id,
@@ -435,20 +449,22 @@ async function payInvoice(req, res) {
         amount: payAmount,
         paymentMethod: method === 'CASH' ? 'CASH' : 'BANK',
         journalId: targetJournal.id,
-        date: today,
+        date: paymentDate,
         status: 'POSTED',
       },
     });
 
     // 3. Update Invoice paidAmount and Status
     const newPaid = parseFloat(invoice.paidAmount) + payAmount;
-    const isFullyPaid = Math.abs(newPaid - parseFloat(invoice.totalAmount)) <= 0.01 || newPaid >= parseFloat(invoice.totalAmount);
+    const isFullyPaid = newPaid >= parseFloat(invoice.totalAmount) - 0.005;
+    // Determine new status: PAID if fully settled, PARTIALLY_PAID if partial
+    const newStatus = isFullyPaid ? 'PAID' : 'PARTIALLY_PAID';
 
     const updatedInvoice = await prisma.customerInvoice.update({
       where: { id: invoiceId },
       data: {
         paidAmount: newPaid,
-        status: isFullyPaid ? 'PAID' : invoice.status,
+        status: newStatus,
       },
       include: {
         customer: true,
@@ -469,6 +485,7 @@ async function payInvoice(req, res) {
     return res.status(500).json({ error: 'Failed to register invoice payment.' });
   }
 }
+
 
 module.exports = {
   getInvoices,

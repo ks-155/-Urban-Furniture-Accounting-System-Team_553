@@ -66,9 +66,13 @@ async function runTests() {
     console.log('✅ 1. Customer logged in successfully: Nimesh Pathak (Role: USER)');
 
     // 2. Customer initiates order: [ + Place New Order / Buy Furniture ]
+    const prodRes = await request('GET', '/api/products', null, custHeaders);
+    const product = prodRes.body.products[0];
+    console.assert(product !== undefined, 'No product found');
+
     const orderRes = await request('POST', '/api/sales', {
       lines: [
-        { productId: 1, quantity: 2 }, // 2 Ergonomic Chairs @ 5500 = 11,000 + 18% GST (1980) = 12,980
+        { productId: product.id, quantity: 2 },
       ],
     }, custHeaders);
     console.assert(orderRes.status === 201, `Customer place order failed: ${JSON.stringify(orderRes.body)}`);
@@ -109,6 +113,24 @@ async function runTests() {
     console.assert(payRes.status === 200, 'Customer pay dues failed');
     console.assert(payRes.body.invoice.status === 'PAID', 'Invoice should be PAID');
     console.log(`✅ 6. Customer paid dues online: Invoice ${newInv.invNumber} status = PAID, Payment JE posted`);
+
+    // Self-cleanup
+    const prisma = require('./src/prisma');
+    if (payRes.body?.payment?.id) {
+      await prisma.payment.delete({ where: { id: payRes.body.payment.id } }).catch(() => {});
+    }
+    if (confirmInv.body?.journalEntry?.id) {
+      await prisma.journalEntry.delete({ where: { id: confirmInv.body.journalEntry.id } }).catch(() => {});
+    }
+    if (newInv?.id) {
+      await prisma.customerInvoiceLine.deleteMany({ where: { invoiceId: newInv.id } }).catch(() => {});
+      await prisma.customerInvoice.delete({ where: { id: newInv.id } }).catch(() => {});
+    }
+    if (newSO?.id) {
+      await prisma.salesOrderLine.deleteMany({ where: { salesOrderId: newSO.id } }).catch(() => {});
+      await prisma.salesOrder.delete({ where: { id: newSO.id } }).catch(() => {});
+    }
+    await prisma.$disconnect();
 
     console.log('\n🎉 ALL 6 CUSTOMER SELF-ORDER WORKFLOW TESTS PASSED PERFECTLY!');
   } catch (err) {

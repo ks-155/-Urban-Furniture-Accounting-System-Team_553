@@ -42,8 +42,8 @@ export const Dashboard = () => {
     financials: { netProfit: revenue - expense },
   };
 
-  // Excalidraw role rule: USER (customer portal) must NEVER see company books
-  if (currentUser?.role === 'USER') {
+  // Excalidraw role rule: USER / CUSTOMER (customer portal) must NEVER see company books
+  if (currentUser?.role === 'USER' || currentUser?.role === 'CUSTOMER') {
     return <CustomerPortal />;
   }
 

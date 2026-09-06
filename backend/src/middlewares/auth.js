@@ -20,8 +20,17 @@ function authenticateToken(req, res, next) {
 }
 
 function authorizeRoles(...allowedRoles) {
+  // Normalize roles so that 'CUSTOMER' and 'USER' are treated equivalently
+  const normalizedAllowed = allowedRoles.flatMap((r) =>
+    r === 'CUSTOMER' || r === 'USER' ? ['CUSTOMER', 'USER'] : [r]
+  );
+
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Access denied. Authentication required.' });
+    }
+    const userRole = req.user.role;
+    if (!normalizedAllowed.includes(userRole)) {
       return res.status(403).json({ error: 'Access forbidden: insufficient permissions.' });
     }
     next();

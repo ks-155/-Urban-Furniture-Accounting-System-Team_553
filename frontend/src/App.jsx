@@ -39,10 +39,15 @@ function Shell() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/sales-orders" element={<StaffRoute><SalesOrders /></StaffRoute>} />
+        <Route path="/sales" element={<StaffRoute><SalesOrders /></StaffRoute>} />
         <Route path="/customer-invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
+        <Route path="/invoices" element={<StaffRoute><CustomerInvoices /></StaffRoute>} />
         <Route path="/purchase-orders" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
+        <Route path="/purchases" element={<StaffRoute><PurchaseOrders /></StaffRoute>} />
         <Route path="/vendor-bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
+        <Route path="/bills" element={<StaffRoute><VendorBills /></StaffRoute>} />
         <Route path="/payments" element={<StaffRoute><Payments /></StaffRoute>} />
+        <Route path="/receipts" element={<StaffRoute><Payments /></StaffRoute>} />
         <Route path="/contacts" element={<StaffRoute><Contacts /></StaffRoute>} />
         <Route path="/products" element={<StaffRoute><Products /></StaffRoute>} />
         <Route path="/chart-of-accounts" element={<StaffRoute><ChartOfAccounts /></StaffRoute>} />
@@ -50,6 +55,7 @@ function Shell() {
         <Route path="/budgets" element={<StaffRoute><Budgets /></StaffRoute>} />
         <Route path="/analytics" element={<StaffRoute><Analytics /></StaffRoute>} />
         <Route path="/journal-entries" element={<StaffRoute><JournalEntries /></StaffRoute>} />
+        <Route path="/reports" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
         <Route path="/reports/balance-sheet" element={<StaffRoute><BalanceSheet /></StaffRoute>} />
         <Route path="/reports/profit-loss" element={<StaffRoute><ProfitLoss /></StaffRoute>} />
         <Route path="/reports/budget-report" element={<StaffRoute><BudgetReport /></StaffRoute>} />

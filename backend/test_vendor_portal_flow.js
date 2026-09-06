@@ -65,14 +65,22 @@ async function runTests() {
     const accHeaders = { Authorization: `Bearer ${accountantToken}` };
 
     // 2. Accountant creates PO for Azure Furniture
+    const contactsRes = await request('GET', '/api/contacts?type=VENDOR', null, accHeaders);
+    const vendor = contactsRes.body.contacts.find((c) => c.name.includes('Azure')) || contactsRes.body.contacts[0];
+    console.assert(vendor !== undefined, 'No vendor found');
+
+    const prodRes = await request('GET', '/api/products', null, accHeaders);
+    const product = prodRes.body.products[0];
+    console.assert(product !== undefined, 'No product found');
+
     const createPO = await request(
       'POST',
       '/api/purchases',
       {
-        vendorId: 1, // Azure Furniture
+        vendorId: vendor.id,
         lines: [
           {
-            productId: 1,
+            productId: product.id,
             quantity: 10,
             unitPrice: 3000,
           },
@@ -153,6 +161,24 @@ async function runTests() {
     const settledBill = vendorBills.body.bills.find((b) => b.id === submittedBill.id);
     console.assert(settledBill.status === 'PAID', 'Vendor bill should now show PAID');
     console.log(`✅ 9. Vendor refreshes portal: Bill ${settledBill.billNumber} shows PAID / SETTLED`);
+
+    // Self-cleanup
+    const prisma = require('./src/prisma');
+    if (payBill.body?.payment?.id) {
+      await prisma.payment.delete({ where: { id: payBill.body.payment.id } }).catch(() => {});
+    }
+    if (je?.id) {
+      await prisma.journalEntry.delete({ where: { id: je.id } }).catch(() => {});
+    }
+    if (submittedBill?.id) {
+      await prisma.vendorBillLine.deleteMany({ where: { billId: submittedBill.id } }).catch(() => {});
+      await prisma.vendorBill.delete({ where: { id: submittedBill.id } }).catch(() => {});
+    }
+    if (po?.id) {
+      await prisma.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: po.id } }).catch(() => {});
+      await prisma.purchaseOrder.delete({ where: { id: po.id } }).catch(() => {});
+    }
+    await prisma.$disconnect();
 
     console.log('\n🎉 ALL 9 VENDOR PORTAL MULTI-ACTOR WORKFLOW TESTS PASSED PERFECTLY!');
   } catch (err) {

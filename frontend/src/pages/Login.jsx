@@ -1,40 +1,32 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAccounting } from '../context/AccountingContext';
 import { Armchair, Lock, User, AlertCircle, ArrowRight, Shield } from 'lucide-react';
 
 export const Login = () => {
-  const { login, authLoading } = useAccounting();
+  const { login, currentUser, authLoading } = useAccounting();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [offlineNote, setOfflineNote] = useState('');
+
+  const from = location.state?.from || '/';
+
+  if (currentUser) {
+    return <Navigate to={from} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setOfflineNote('');
 
     const res = await login(loginId, password);
     if (!res.success) {
       setError(res.error);
     } else {
-      if (res.offline) setOfflineNote('Backend unreachable — signed in with offline demo data.');
-      navigate('/');
-    }
-  };
-
-  const handleQuickLogin = async (demoId, demoPass) => {
-    setLoginId(demoId);
-    setPassword(demoPass);
-    setError('');
-    const res = await login(demoId, demoPass);
-    if (res.success) {
-      navigate('/');
-    } else {
-      setError(res.error);
+      navigate(from, { replace: true });
     }
   };
 
@@ -66,12 +58,6 @@ export const Login = () => {
             <div className="mb-5 flex items-start space-x-2 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium animate-in fade-in duration-150">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
-            </div>
-          )}
-
-          {offlineNote && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
-              {offlineNote}
             </div>
           )}
 
@@ -134,7 +120,8 @@ export const Login = () => {
           {/* Forgot Password | Sign Up Links (from wireframe) */}
           <div className="mt-6 text-center border-t border-slate-100 pt-4 flex items-center justify-center space-x-3 text-xs font-semibold text-slate-600">
             <button
-              onClick={() => alert('Password recovery: Please contact the system administrator or use the demo login.')}
+              type="button"
+              onClick={() => alert('Please contact the system administrator to reset your credentials.')}
               className="hover:text-blue-600 transition-colors"
             >
               Forgot Password
@@ -143,41 +130,6 @@ export const Login = () => {
             <Link to="/signup" className="text-blue-600 hover:text-blue-700 transition-colors">
               Sign Up
             </Link>
-          </div>
-
-          {/* Quick Demo Credentials for Judges */}
-          <div className="mt-6 pt-4 border-t border-dashed border-slate-200">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2.5">
-              ⚡ 1-Click Demo Logins
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'Admin@123')}
-                className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-center transition-all"
-              >
-                <span className="block text-[11px] font-bold">Admin</span>
-                <span className="text-[9px] opacity-75">All access</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('accountant01', 'Password@123')}
-                className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-center transition-all"
-              >
-                <span className="block text-[11px] font-bold">Accountant</span>
-                <span className="text-[9px] opacity-75">Ops & Books</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('nimeshp', 'Password@123')}
-                className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-center transition-all"
-              >
-                <span className="block text-[11px] font-bold">Customer</span>
-                <span className="text-[9px] opacity-75">Invoices & Pay</span>
-              </button>
-            </div>
           </div>
 
         </div>

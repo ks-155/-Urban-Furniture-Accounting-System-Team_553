@@ -40,6 +40,8 @@ async function getBalanceSheet(req, res) {
     let totalLiabilities = 0;
     let totalEquity = 0;
 
+    let currentPeriodProfit = 0;
+
     accounts.forEach((acc) => {
       const totDebit = acc.journalItems.reduce((s, i) => s + parseFloat(i.debit || 0), 0);
       const totCredit = acc.journalItems.reduce((s, i) => s + parseFloat(i.credit || 0), 0);
@@ -71,8 +73,22 @@ async function getBalanceSheet(req, res) {
           balance: parseFloat(balance.toFixed(2)),
         });
         totalEquity += balance;
+      } else if (acc.type === 'INCOME') {
+        currentPeriodProfit += (totCredit - totDebit);
+      } else if (acc.type === 'EXPENSE') {
+        currentPeriodProfit -= (totDebit - totCredit);
       }
     });
+
+    if (Math.abs(currentPeriodProfit) > 0.001) {
+      equity.push({
+        id: 0,
+        code: '3999',
+        name: 'Current Period Earnings / Net Profit',
+        balance: parseFloat(currentPeriodProfit.toFixed(2)),
+      });
+      totalEquity += currentPeriodProfit;
+    }
 
     totalAssets = parseFloat(totalAssets.toFixed(2));
     totalLiabilities = parseFloat(totalLiabilities.toFixed(2));

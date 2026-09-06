@@ -12,6 +12,7 @@ router.get('/:id', salesController.getSalesOrderById);
 // Staff or Customer order creation
 router.post('/', salesController.createSalesOrder);
 router.post('/:id/confirm', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.confirmSalesOrder);
+router.post('/:id/cancel', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.cancelSalesOrder);
 router.post('/:id/create-invoice', authorizeRoles('ADMIN', 'ACCOUNTANT'), salesController.createInvoiceFromSO);
 
 module.exports = router;

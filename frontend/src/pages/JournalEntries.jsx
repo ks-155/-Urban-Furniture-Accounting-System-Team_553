@@ -8,7 +8,12 @@ const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 const entryTotal = (e) => e.items.reduce((s, i) => s + Number(i.debit || 0), 0);
 
 export const JournalEntries = () => {
-  const { journalEntries, accounts: mockAccounts, journals: mockJournals, createJournalEntry } = useAccounting();
+  const { journalEntries, accounts: mockAccounts, journals: mockJournals, createJournalEntry, syncAllData } = useAccounting();
+
+  React.useEffect(() => {
+    if (syncAllData) syncAllData();
+  }, [syncAllData]);
+
   const accountsFetcher = useCallback(() => accountsAPI.list(), []);
   const { data: liveAccounts } = useLiveList(accountsFetcher, 'accounts', mockAccounts);
   const journalsFetcher = useCallback(() => journalsAPI.list(), []);

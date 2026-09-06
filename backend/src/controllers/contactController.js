@@ -18,6 +18,14 @@ async function getContacts(req, res) {
       ];
     }
 
+    // Role-based scoping: portal users (USER/CUSTOMER) only view their own contact
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
+      if (!req.user.contactId) {
+        return res.status(200).json({ contacts: [] });
+      }
+      where.id = req.user.contactId;
+    }
+
     const contacts = await prisma.contact.findMany({
       where,
       orderBy: { name: 'asc' },
@@ -46,6 +54,12 @@ async function getContactById(req, res) {
 
     if (!contact) {
       return res.status(404).json({ error: 'Contact not found.' });
+    }
+
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
+      if (!req.user.contactId || parseInt(id, 10) !== req.user.contactId) {
+        return res.status(403).json({ error: 'Access denied: You can only view your own contact profile.' });
+      }
     }
 
     return res.status(200).json({ contact });
@@ -114,6 +128,12 @@ async function updateContact(req, res) {
     });
     if (!existing) {
       return res.status(404).json({ error: 'Contact not found.' });
+    }
+
+    if (req.user && (req.user.role === 'USER' || req.user.role === 'CUSTOMER')) {
+      if (!req.user.contactId || parseInt(id, 10) !== req.user.contactId) {
+        return res.status(403).json({ error: 'Access denied: You can only update your own contact profile.' });
+      }
     }
 
     const updateData = {};

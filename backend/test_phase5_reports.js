@@ -131,6 +131,16 @@ async function runTests() {
     console.log(`      • Purchase: ${dash.body.purchase.all} orders (${dash.body.purchase.confirmed} confirmed), Expense: ₹${dash.body.purchase.totalExpense}`);
     console.log(`      • Financials: Net Profit = ₹${dash.body.financials.netProfit}, Receivables = ₹${dash.body.financials.totalReceivables}, Payables = ₹${dash.body.financials.totalPayables}`);
 
+    // Self-cleanup of test budgets
+    const prisma = require('./src/prisma');
+    if (reviseRes?.body?.revisedBudget?.id) {
+      await prisma.budget.delete({ where: { id: reviseRes.body.revisedBudget.id } }).catch(() => {});
+    }
+    if (newBudgetId) {
+      await prisma.budget.delete({ where: { id: newBudgetId } }).catch(() => {});
+    }
+    await prisma.$disconnect();
+
     console.log('\n🎉 ALL 8 PHASE 5 REPORTS, BUDGETS & DASHBOARD TESTS PASSED PERFECTLY!');
   } catch (err) {
     console.error('❌ Phase 5 Test failed:', err);
