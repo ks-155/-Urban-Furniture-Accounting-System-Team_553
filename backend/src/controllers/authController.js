@@ -22,14 +22,16 @@ async function login(req, res) {
       return res.status(401).json({ error: 'Invalid Login Id or Password' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid Login Id or Password' });
     }
 
     const tokenPayload = {
-      userId: user.id,
-      systemRole: user.systemRole,
+      id: user.id,
+      loginId: user.loginId,
+      role: user.role,
+      contactId: user.contactId,
     };
 
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
@@ -42,8 +44,8 @@ async function login(req, res) {
         name: user.name,
         loginId: user.loginId,
         email: user.email,
-        systemRole: user.systemRole,
-        contactId: user.contact?.id,
+        role: user.role,
+        contactId: user.contactId,
       },
     });
   } catch (error) {
@@ -52,10 +54,10 @@ async function login(req, res) {
   }
 }
 
-// POST /api/auth/signup
+// POST /api/auth/signup (Creates a USER role)
 async function signup(req, res) {
   try {
-    const { name, loginId, email, password, confirmPassword, isCustomer, isVendor } = req.body;
+    const { name, loginId, email, password, confirmPassword } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Full name is required.' });
@@ -80,18 +82,39 @@ async function signup(req, res) {
       return res.status(400).json({ error: passwordError });
     }
 
+    // Check duplicate loginId
     const existingLoginId = await prisma.user.findUnique({
       where: { loginId: loginId.trim() },
     });
     if (existingLoginId) {
-      return res.status(400).json({ error: 'Login ID is already taken.' });
+      return res.status(400).json({ error: 'Login ID is already taken. Please choose another.' });
     }
 
+    // Check duplicate email
     const existingEmail = await prisma.user.findUnique({
       where: { email: email.trim().toLowerCase() },
     });
     if (existingEmail) {
-      return res.status(400).json({ error: 'Email is already registered.' });
+      return res.status(400).json({ error: 'Email is already registered. Please use another.' });
+    }
+
+    // Auto-create or link Contact record for customer portal access
+    let contact = await prisma.contact.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
+
+    if (!contact) {
+      contact = await prisma.contact.create({
+        data: {
+          name: name.trim(),
+          type: 'CUSTOMER',
+          email: email.trim().toLowerCase(),
+          phone: '',
+          city: '',
+          state: '',
+          pincode: '',
+        },
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -101,39 +124,17 @@ async function signup(req, res) {
         name: name.trim(),
         loginId: loginId.trim(),
         email: email.trim().toLowerCase(),
-        passwordHash: hashedPassword,
-        systemRole: 'STAFF', // always default to STAFF
+        password: hashedPassword,
+        role: 'USER',
+        contactId: contact.id,
       },
     });
 
-    let contact = await prisma.contact.findUnique({
-      where: { email: email.trim().toLowerCase() },
-    });
-
-    if (!contact) {
-      contact = await prisma.contact.create({
-        data: {
-          userId: newUser.id,
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          isCustomer: Boolean(isCustomer),
-          isVendor: Boolean(isVendor),
-          phone: '',
-          city: '',
-          state: '',
-          pincode: '',
-        },
-      });
-    } else {
-      contact = await prisma.contact.update({
-        where: { id: contact.id },
-        data: { userId: newUser.id }
-      });
-    }
-
     const tokenPayload = {
-      userId: newUser.id,
-      systemRole: newUser.systemRole,
+      id: newUser.id,
+      loginId: newUser.loginId,
+      role: newUser.role,
+      contactId: newUser.contactId,
     };
 
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
@@ -146,8 +147,8 @@ async function signup(req, res) {
         name: newUser.name,
         loginId: newUser.loginId,
         email: newUser.email,
-        systemRole: newUser.systemRole,
-        contactId: contact.id,
+        role: newUser.role,
+        contactId: newUser.contactId,
       },
     });
   } catch (error) {
@@ -160,13 +161,14 @@ async function signup(req, res) {
 async function getMe(req, res) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+      where: { id: req.user.id },
       select: {
         id: true,
         name: true,
         loginId: true,
         email: true,
-        systemRole: true,
+        role: true,
+        contactId: true,
         contact: true,
         createdAt: true,
       },

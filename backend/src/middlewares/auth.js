@@ -10,34 +10,35 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ error: 'Access denied. No token provided.' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Invalid or expired token.' });
     }
-    // Set req.user to match exactly { userId, systemRole }
-    req.user = {
-      userId: decoded.userId,
-      systemRole: decoded.systemRole,
-    };
+    req.user = user;
     next();
   });
 }
 
 function authorizeRoles(...allowedRoles) {
+  // Normalize roles so that 'CUSTOMER' and 'USER' are treated equivalently
+  const normalizedAllowed = allowedRoles.flatMap((r) =>
+    r === 'CUSTOMER' || r === 'USER' ? ['CUSTOMER', 'USER'] : [r]
+  );
+
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Access denied. Authentication required.' });
     }
-    const userRole = req.user.systemRole;
-    if (!allowedRoles.includes(userRole)) {
-      return res.status(403).json({ error: `Access forbidden: requires one of ${allowedRoles.join(', ')}.` });
+    const userRole = req.user.role;
+    if (!normalizedAllowed.includes(userRole)) {
+      return res.status(403).json({ error: 'Access forbidden: insufficient permissions.' });
     }
     next();
   };
 }
 
 module.exports = {
-  JWT_SECRET,
   authenticateToken,
   authorizeRoles,
+  JWT_SECRET,
 };
