@@ -27,7 +27,40 @@ const nets = (entries) => {
   return m;
 };
 
-const FilterBar = ({ title, live, years, year, setYear, yearOptions }) => (
+// Prints only the element with the given section ID, hiding all other .report-section divs
+const printSection = (sectionId) => {
+  // Mark which section to print
+  document.querySelectorAll('.report-section').forEach((el) => {
+    el.classList.remove('print-target');
+  });
+  const target = document.getElementById(sectionId);
+  if (target) target.classList.add('print-target');
+
+  // Inject a one-time print stylesheet
+  const styleId = '__section_print_style__';
+  let style = document.getElementById(styleId);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = styleId;
+    document.head.appendChild(style);
+  }
+  style.textContent = `
+    @media print {
+      body * { visibility: hidden !important; }
+      .print-target, .print-target * { visibility: visible !important; }
+      .print-target { position: fixed !important; top: 0; left: 0; width: 100%; }
+      .no-print { display: none !important; }
+    }
+  `;
+  window.print();
+  // Cleanup after print dialog closes
+  setTimeout(() => {
+    if (target) target.classList.remove('print-target');
+    if (style) style.textContent = '';
+  }, 500);
+};
+
+const FilterBar = ({ title, live, years, year, setYear, yearOptions, sectionId }) => (
   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
     <div>
       <h1 className="text-xl font-bold text-slate-900">{title}</h1>
@@ -38,7 +71,12 @@ const FilterBar = ({ title, live, years, year, setYear, yearOptions }) => (
           {(yearOptions || years.map((y) => ({ value: y, label: y }))).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       )}
-      <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
+      <button
+        onClick={() => sectionId ? printSection(sectionId) : window.print()}
+        className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"
+      >
+        <Printer className="w-4 h-4" /> Print / PDF
+      </button>
     </div>
   </div>
 );
@@ -69,8 +107,8 @@ export const BalanceSheet = () => {
 
   if (live) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FilterBar title={`Balance Sheet${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} />
+      <div id="section-balance-sheet" className="report-section max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <FilterBar title={`Balance Sheet${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} sectionId="section-balance-sheet" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
             <h2 className="font-bold text-slate-900 mb-2">Assets</h2>
@@ -103,8 +141,8 @@ export const BalanceSheet = () => {
   const totalLiab = creditors + tax + capital;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <FilterBar title={`Balance Sheet ${year}`} live={false} years={years} year={year} setYear={setYear} />
+    <div id="section-balance-sheet" className="report-section max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <FilterBar title={`Balance Sheet ${year}`} live={false} years={years} year={year} setYear={setYear} sectionId="section-balance-sheet" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 className="font-bold text-slate-900 mb-2">Assets</h2>
@@ -144,8 +182,8 @@ export const ProfitLoss = () => {
 
   if (live) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FilterBar title={`Profit and Loss Report${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} />
+      <div id="section-profit-loss" className="report-section max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <FilterBar title={`Profit and Loss Report${liveYear ? ` ${liveYear}` : ''}`} live yearOptions={LIVE_YEARS} year={liveYear} setYear={setLiveYear} sectionId="section-profit-loss" />
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h2 className="font-bold text-slate-900 mb-2">Income</h2>
           {(live.income || []).map((a) => row(a.account || a.name, a.amount, false))}
@@ -170,8 +208,8 @@ export const ProfitLoss = () => {
   const net = sales - expenses;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <FilterBar title={`Profit and Loss Report ${year}`} live={false} years={years} year={year} setYear={setYear} />
+    <div id="section-profit-loss" className="report-section max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <FilterBar title={`Profit and Loss Report ${year}`} live={false} years={years} year={year} setYear={setYear} sectionId="section-profit-loss" />
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         <h2 className="font-bold text-slate-900 mb-2">Income</h2>
         {row('Income from Sales', sales)}
@@ -200,12 +238,12 @@ export const BudgetReport = () => {
 
   if (Array.isArray(live)) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div id="section-budget-report" className="report-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div>
             <h1 className="text-xl font-bold text-slate-900">Budget Report (List View)</h1>
           </div>
-          <button onClick={() => window.print()} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
+          <button onClick={() => printSection('section-budget-report')} className="no-print px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 flex items-center gap-1.5"><Printer className="w-4 h-4" /> Print / PDF</button>
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
