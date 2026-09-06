@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <style>
+    .purchase { fill:#fff7ed; stroke:#ea580c; stroke-width:3; rx:14; }
+    .sales { fill:#eff6ff; stroke:#2563eb; stroke-width:3; rx:14; }
+    .journal { fill:#f0fdf4; stroke:#16a34a; stroke-width:3; rx:14; }
+    .title { font:700 32px Arial; fill:#0f172a; }
+    .label { font:600 20px Arial; fill:#0f172a; text-anchor:middle; }
+    .small { font:17px Arial; fill:#334155; text-anchor:middle; }
+    .arrow { stroke:#475569; stroke-width:4; marker-end:url(#arrow); }
+  </style>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#475569"/></marker></defs>
+  <text x="600" y="50" class="title" text-anchor="middle">Business Transaction Flows</text>
+  <text x="300" y="105" class="label">Purchase side</text>
+  <rect x="50" y="140" width="170" height="100" class="purchase"/><text x="135" y="180" class="label">Purchase Order</text><text x="135" y="215" class="small">Vendor + products</text>
+  <rect x="275" y="140" width="170" height="100" class="purchase"/><text x="360" y="180" class="label">Vendor Bill</text><text x="360" y="215" class="small">Confirm amount</text>
+  <rect x="500" y="140" width="170" height="100" class="purchase"/><text x="585" y="180" class="label">Payment</text><text x="585" y="215" class="small">Cash or bank</text>
+  <path d="M220 190 H275" class="arrow"/><path d="M445 190 H500" class="arrow"/>
+  <text x="300" y="350" class="label">Sales side</text>
+  <rect x="50" y="385" width="170" height="100" class="sales"/><text x="135" y="425" class="label">Sales Order</text><text x="135" y="460" class="small">Customer + products</text>
+  <rect x="275" y="385" width="170" height="100" class="sales"/><text x="360" y="425" class="label">Invoice</text><text x="360" y="460" class="small">Tax + total</text>
+  <rect x="500" y="385" width="170" height="100" class="sales"/><text x="585" y="425" class="label">Receipt</text><text x="585" y="460" class="small">Cash or bank</text>
+  <path d="M220 435 H275" class="arrow"/><path d="M445 435 H500" class="arrow"/>
+  <rect x="820" y="250" width="300" height="180" class="journal"/><text x="970" y="300" class="label">Automatic journals</text><text x="970" y="340" class="small">Debit and credit lines</text><text x="970" y="375" class="small">Every posted entry balances</text>
+  <path d="M670 190 C760 190 760 300 820 300" class="arrow"/><path d="M670 435 C760 435 760 380 820 380" class="arrow"/>
+</svg>

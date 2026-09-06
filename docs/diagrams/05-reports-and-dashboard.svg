@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <style>
+    .source { fill:#f1f5f9; stroke:#475569; stroke-width:3; rx:16; }
+    .report { fill:#fefce8; stroke:#ca8a04; stroke-width:3; rx:16; }
+    .out { fill:#ecfdf5; stroke:#059669; stroke-width:3; rx:16; }
+    .title { font:700 32px Arial; fill:#0f172a; }
+    .label { font:600 21px Arial; fill:#0f172a; text-anchor:middle; }
+    .small { font:18px Arial; fill:#334155; text-anchor:middle; }
+    .arrow { stroke:#475569; stroke-width:4; marker-end:url(#arrow); }
+  </style>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#475569"/></marker></defs>
+  <text x="600" y="55" class="title" text-anchor="middle">Reports and Dashboard Flow</text>
+  <rect x="70" y="210" width="240" height="170" class="source"/><text x="190" y="260" class="label">Posted data</text><text x="190" y="300" class="small">Invoices</text><text x="190" y="335" class="small">Bills and payments</text><text x="190" y="370" class="small">Journal entries</text>
+  <rect x="470" y="190" width="250" height="210" class="report"/><text x="595" y="245" class="label">Report API</text><text x="595" y="285" class="small">Calculate totals</text><text x="595" y="320" class="small">Apply date filters</text><text x="595" y="355" class="small">Check balance</text>
+  <path d="M310 295 H470" class="arrow"/>
+  <rect x="880" y="150" width="240" height="100" class="out"/><text x="1000" y="190" class="label">Dashboard</text><text x="1000" y="225" class="small">Summary cards</text>
+  <rect x="880" y="285" width="240" height="100" class="out"/><text x="1000" y="325" class="label">P&amp;L</text><text x="1000" y="360" class="small">Income - expense</text>
+  <rect x="880" y="420" width="240" height="100" class="out"/><text x="1000" y="460" class="label">Balance Sheet</text><text x="1000" y="495" class="small">Assets = liabilities + equity</text>
+  <path d="M720 250 C790 250 820 200 880 200" class="arrow"/><path d="M720 295 H880" class="arrow"/><path d="M720 350 C790 350 820 470 880 470" class="arrow"/>
+  <text x="595" y="555" class="small">Reports read posted accounting data; they do not replace the ledger.</text>
+</svg>
